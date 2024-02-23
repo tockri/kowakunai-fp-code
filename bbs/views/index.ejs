@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BBS</title>
+  </head>
+  <body>
+    
+    <form action="/" method="get">
+      <input type="text" name="query" id="bbs-query" value="<%= query %>">
+      <button type="submit">検索</button>
+      <a href="/logout">ログアウト</a>
+    </form>
+    <form action="/post" method="post">
+      <ul>
+      <% for (const message of messages) {%>
+        <%- include("message", {message}) %>
+      <% }%>
+      </ul>
+      <div>
+        <input type="radio" name="parentId" id="empty-parent" value="" checked>
+        <input type="text" name="content" id="content-text">
+        <button type="submit">送信</button>
+      </div>
+    </form>
+  </body>
+</html>
