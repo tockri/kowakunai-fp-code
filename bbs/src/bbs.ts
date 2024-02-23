@@ -1,9 +1,9 @@
 import express from "express"
-import { Request } from "express"
 import { MessageDao, Prisma, PrismaClient } from "@prisma/client"
-import { body, validationResult } from "express-validator"
+import { body } from "express-validator"
 import { authenticated } from "./authentication"
 import { validated } from "./validation"
+import { pipeAsync } from "./pipeAsync"
 
 const prisma = new PrismaClient()
 
@@ -54,14 +54,17 @@ type IndexLogicResult = [
   }
 ]
 
-const indexLogic = async (
+const indexLogic = (
   query: string | undefined,
   findMany: (args: Prisma.MessageDaoFindManyArgs) => Promise<MessageDao[]>
-): Promise<IndexLogicResult> => {
-  const messageList = await findMany(makeFindManyArgsForMessageList(query))
-  const messages = buildMessageNodes(messageList)
-  return ["index", { messages, query }]
-}
+): Promise<IndexLogicResult> =>
+  pipeAsync(
+    query,
+    makeFindManyArgsForMessageList,
+    findMany,
+    buildMessageNodes,
+    (messages) => ["index", { messages, query }]
+  )
 
 /**
  * @param query req.query.query
@@ -69,25 +72,24 @@ const indexLogic = async (
  */
 const makeFindManyArgsForMessageList = (
   query: string | undefined
-): Prisma.MessageDaoFindManyArgs => {
-  return {
-    where: query
-      ? {
-          content: {
-            contains: query
-          }
+): Prisma.MessageDaoFindManyArgs => ({
+  where: query
+    ? {
+        content: {
+          contains: query
         }
-      : undefined,
-    orderBy: { id: Prisma.SortOrder.asc }
-  }
-}
+      }
+    : undefined,
+  orderBy: { id: Prisma.SortOrder.asc }
+})
 
 /**
  * @param messageList DBから取得した配列
  * @returns ツリー構造
  */
 const buildMessageNodes = (messageList: MessageDao[]): MessageNode[] => {
-  const nodeMap: Map<number, MessageNode> = new Map()
+  console.log({ messageList })
+  const nodeMap: Map<number, MessageNode> = new Map<number, MessageNode>()
   for (const message of messageList) {
     nodeMap.set(message.id, { ...message, children: [] })
   }
@@ -105,9 +107,9 @@ const buildMessageNodes = (messageList: MessageDao[]): MessageNode[] => {
   return nodes
 }
 
-type PostBody = {
-  content: string
-  parentId: string
+interface PostBody {
+  readonly content: string
+  readonly parentId: string
 }
 
 router.post(
@@ -116,11 +118,13 @@ router.post(
   body("parentId").matches(/^\d*$/),
   authenticated,
   validated,
-  async (req, res) => {
-    const body = req.body as PostBody
-    await prisma.messageDao.create(makeCreateArgsForPostMessage(body))
-    res.redirect("/")
-  }
+  (req, res) =>
+    pipeAsync(
+      req.body as PostBody,
+      makeCreateArgsForPostMessage,
+      prisma.messageDao.create,
+      () => res.redirect("/")
+    )
 )
 
 const makeCreateArgsForPostMessage = (
