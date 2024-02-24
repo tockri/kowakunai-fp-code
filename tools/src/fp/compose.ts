@@ -36,6 +36,7 @@ export function pipe<T1, T2, T3, T4, T5, T6, T7>(
   func6: Func<T6, T7>
 ): Func<T1, T7>
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function pipe(...funcs: Func<any, any>[]): Func<any, any> {
-  return (arg: any) => funcs.reduce((prev, func) => func(prev), arg)
+  return (arg) => funcs.reduce((prev, func) => func(prev), arg)
 }
