@@ -36,10 +36,7 @@ export function pipe<T1, T2, T3, T4, T5, T6, T7>(
   func6: Func<T6, T7>
 ): Func<T1, T7>
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function pipe(...funcs: Func<any, any>[]): Func<any, any> {
-  return _pipe(funcs)
+  return (arg) => funcs.reduce((prev, func) => func(prev), arg)
 }
-
-const _pipe = (funcs: Func<any, any>[]): Func<any, any> =>
-  compose(funcs[0], funcs.length === 2 ? funcs[1] : _pipe(funcs.slice(1)))
