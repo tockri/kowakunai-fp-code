@@ -37,7 +37,7 @@ export function pipe<T1, T2, T3, T4, T5, T6, T7>(
 ): Func<T1, T7>
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
-export function pipe(...funcs: Func<any, any>[]): Func<any, any> {
+export function pipe(...funcs: readonly Func<any, any>[]): Func<any, any> {
   return (arg) => funcs.reduce((acc, func) => func(acc), arg)
 }
 
@@ -74,7 +74,7 @@ export function pipeAsync<T1, T2, T3, T4, T5, T6, T7>(
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 export function pipeAsync(
-  ...funcs: AsyncFunc<any, any>[]
+  ...funcs: readonly AsyncFunc<any, any>[]
 ): Func<any, Promise<any>> {
   return (arg) => funcs.reduce(async (acc, func) => func(await acc), arg)
 }
