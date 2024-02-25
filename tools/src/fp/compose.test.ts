@@ -1,5 +1,5 @@
 import { describe, test, expect } from "bun:test"
-import { compose, pipe } from "./compose"
+import { compose, pipe, pipeAsync } from "./compose"
 
 describe("compose", () => {
   test("combine same type funcs", () => {
@@ -23,7 +23,7 @@ describe("compose", () => {
 })
 
 describe("pipe", () => {
-  test("combine 2 funcs", () => {
+  test("combine 4 funcs", () => {
     const composed = pipe(
       (a: number) => `${a + 1}`,
       (s: string) => s + s,
@@ -32,5 +32,34 @@ describe("pipe", () => {
     )
     expect(composed(1)).toBe(44)
     expect(composed(2)).toBe(66)
+  })
+})
+
+describe("pipeAsync", () => {
+  test("combine sync funcs", async () => {
+    const composed = pipeAsync(
+      (a: number) => `${a + 1}`,
+      (s: string) => s + s,
+      (s: string) => parseInt(s),
+      (a: number) => a * 2
+    )
+    expect(await composed(1)).toBe(44)
+    expect(await composed(2)).toBe(66)
+  })
+
+  test("combine async funcs", async () => {
+    const composed = pipeAsync(
+      (a: number) => `${a + 1}`,
+      (s: string) => Promise.resolve(s + s),
+      (s: string) => parseInt(s),
+      (a: number) =>
+        new Promise((resolve) =>
+          setTimeout(() => {
+            resolve(a * 2)
+          }, 50)
+        )
+    )
+    expect(await composed(1)).toBe(44)
+    expect(await composed(2)).toBe(66)
   })
 })
