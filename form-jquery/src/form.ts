@@ -26,7 +26,7 @@ const replaceZenkakuToHankaku = (str: string): string =>
     .replace(/[Ａ-Ｚａ-ｚ０-９＠．]/g, (s) =>
       String.fromCharCode(s.charCodeAt(0) - 65248)
     )
-    .replace(/[ー−―‐]/, "-")
+    .replace(/[ー−―‐]/g, "-")
 
 /**
  * 郵便番号にハイフンが含まれてなければ入れる
@@ -132,19 +132,26 @@ declare const M: any
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 declare const window: any
 // 初期化
-$(function () {
-  // Materializeのデフォルト挙動をOFFするおまじない
-  M.validate_field = window.validate_field = function () {
-    return
-  }
-  // changeイベントを登録
-  $("#name").on("change", validateName)
-  $("#address").on("change", validateAddress)
-  $("#zip").on("change", validateZip)
-  $("#mail").on("change", validateMail)
-  $("#submit-button").on("click", () => {
-    if (checkSubmitable()) {
-      alert("フォーム送信！")
+if (typeof window === "object") {
+  $(function () {
+    // Materializeのデフォルト挙動をOFFするおまじない
+    M.validate_field = window.validate_field = function () {
+      return
     }
+    // changeイベントを登録
+    $("#name").on("change", validateName)
+    $("#address").on("change", validateAddress)
+    $("#zip").on("change", validateZip)
+    $("#mail").on("change", validateMail)
+    $("#submit-button").on("click", () => {
+      if (checkSubmitable()) {
+        alert("フォーム送信！")
+      }
+    })
   })
-})
+}
+
+export const Form_forTestOnly = {
+  replaceZenkakuToHankaku,
+  normalizeZipCode
+}
