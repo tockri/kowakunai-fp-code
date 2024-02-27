@@ -112,4 +112,9 @@ $(function () {
   $("#address").on("change", validateAddress)
   $("#zip").on("change", validateZip)
   $("#mail").on("change", validateMail)
+  $("#submit-button").on("click", () => {
+    if (checkSubmitable()) {
+      alert("フォーム送信！")
+    }
+  })
 })
