@@ -6,6 +6,7 @@
     "@types/jquery": "^3.5.29",
     "eslint": "^8.56.0",
     "prettier": "^3.2.5",
+    "serve-static-bun": "^0.5.3",
     "typescript": "^5.0.0",
     "typescript-eslint": "^7.0.1"
   },
@@ -25,7 +26,7 @@
     "semi": false
   },
   "scripts": {
-    "dev": "bun build src/form.ts --outdir dist --format cjs --watch"
+    "dev": "bun src/server.ts --watch"
   },
   "type": "module",
   "dependencies": {

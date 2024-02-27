@@ -2,8 +2,8 @@ import $ from "jquery"
 
 export interface State {
   value: string
-  isValid: boolean
-  errorMessage: string
+  isValid?: boolean
+  errorMessage?: string
 }
 
 /**
@@ -198,5 +198,6 @@ if (typeof window === "object") {
 
 export const Form_forTestOnly = {
   replaceZenkakuToHankaku,
-  normalizeZipCode
+  normalizeZipCode,
+  nameLogic
 }
