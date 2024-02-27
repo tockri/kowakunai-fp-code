@@ -32,22 +32,34 @@ const setState = (ipt: JQuery, helper: JQuery, state: State) => {
   }
 }
 
+type CheckFunction = (state: State) => State
+
+/**
+ * メインロジックをラップする。
+ * I/Oはここに局所化
+ */
+const validate = (inputSel: string, helperSel: string, func: CheckFunction) => {
+  const ipt = $(inputSel)
+  const helper = $(helperSel)
+  const state = getState(ipt)
+  const checked = func(state)
+  setState(ipt, helper, checked)
+  checkSubmitable()
+}
+
+/**
+ * 名前の検証ロジック
+ */
+const nameLogic: CheckFunction = (state) =>
+  state.value
+    ? { ...state, isValid: true }
+    : { ...state, isValid: false, errorMessage: "氏名を入力してください" }
+
 /**
  * 名前のバリデーション
  */
 function validateName() {
-  // Stateを読み取る
-  const ipt = $("#name")
-  const helper = $("#name-helper")
-  const state = getState(ipt)
-  // チェックする
-  const checked: State = state.value
-    ? { ...state, isValid: true }
-    : { ...state, isValid: false, errorMessage: "氏名を入力してください" }
-  // StateをDOMに書き戻す
-  setState(ipt, helper, checked)
-  // submit-buttonのチェックもする
-  checkSubmitable()
+  validate("#name", "#name-helper", nameLogic)
 }
 
 /**
