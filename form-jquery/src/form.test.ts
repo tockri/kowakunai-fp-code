@@ -1,6 +1,5 @@
 import { describe, test, expect } from "bun:test"
 import { Form_forTestOnly } from "./form"
-
 const { replaceZenkakuToHankaku, normalizeZipCode } = Form_forTestOnly
 
 describe("replaceZenkakuToHankaku", () => {

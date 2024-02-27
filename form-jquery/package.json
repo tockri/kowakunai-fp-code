@@ -25,7 +25,7 @@
     "semi": false
   },
   "scripts": {
-    "dev": "bun build src/form.ts --outdir dist --watch"
+    "dev": "bun build src/form.ts --outdir dist --format cjs --watch"
   },
   "type": "module",
   "dependencies": {
