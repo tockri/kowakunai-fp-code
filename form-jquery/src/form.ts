@@ -19,6 +19,28 @@ function validateName() {
 }
 
 /**
+ * 全角を半角に変換する
+ */
+const replaceZenkakuToHankaku = (str: string): string =>
+  str
+    .replace(/[Ａ-Ｚａ-ｚ０-９＠．]/g, (s) =>
+      String.fromCharCode(s.charCodeAt(0) - 65248)
+    )
+    .replace(/[ー−―‐]/, "-")
+
+/**
+ * 郵便番号にハイフンが含まれてなければ入れる
+ */
+const normalizeZipCode = (str: string): string => {
+  const m = str.match(/^(\d{3})-?(\d{4})$/)
+  if (m) {
+    return `${m[1]}-${m[2]}`
+  } else {
+    return str
+  }
+}
+
+/**
  * 郵便番号のバリデーション
  */
 function validateZip() {
@@ -27,14 +49,9 @@ function validateZip() {
   let zip = ipt.val() as string
   if (zip) {
     // 全角→半角に変換
-    zip = zip
-      .replace(/[Ａ-Ｚａ-ｚ０-９＠．]/g, function (s) {
-        return String.fromCharCode(s.charCodeAt(0) - 65248)
-      })
-      .replace(/[ー−―‐]/, "-")
-    const m = zip.match(/^(\d{3})-?(\d{4})$/)
-    if (m) {
-      zip = m[1] + "-" + m[2]
+    zip = replaceZenkakuToHankaku(zip)
+    zip = normalizeZipCode(zip)
+    if (zip.match(/^(\d{3})-(\d{4})$/)) {
       ipt.val(zip)
       ipt.removeClass("invalid")
       ipt.addClass("valid")
@@ -68,6 +85,7 @@ function validateAddress() {
   // submit-buttonのチェックもする
   checkSubmitable()
 }
+
 /**
  * メールアドレスのバリデーション
  */
@@ -76,12 +94,7 @@ function validateMail() {
   const helper = $("#mail-helper")
   let mail = ipt.val() as string
   if (mail) {
-    mail = mail
-      .replace(/[Ａ-Ｚａ-ｚ０-９＠．]/g, function (s) {
-        return String.fromCharCode(s.charCodeAt(0) - 65248)
-      })
-      .replace(/[ー−―‐]/, "-")
-      .toLowerCase()
+    mail = replaceZenkakuToHankaku(mail).toLowerCase()
     if (mail.match(/^[\w.]+@[\w.]+[^.]$/)) {
       ipt.val(mail)
       ipt.removeClass("invalid")
