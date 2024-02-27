@@ -28,7 +28,7 @@ const setState = (ipt: JQuery, helper: JQuery, state: State) => {
   } else {
     ipt.addClass("invalid")
     ipt.removeClass("valid")
-    helper.attr("data-error", state.errorMessage)
+    helper.attr("data-error", state.errorMessage || "")
   }
 }
 
