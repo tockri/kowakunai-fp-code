@@ -24,9 +24,18 @@ function validateName() {
 function validateZip() {
   const ipt = $("#zip")
   const helper = $("#zip-helper")
-  const zip = ipt.val() as string
+  let zip = ipt.val() as string
   if (zip) {
-    if (zip.match(/^\d{3}-\d{4}$/)) {
+    // 全角→半角に変換
+    zip = zip
+      .replace(/[Ａ-Ｚａ-ｚ０-９＠．]/g, function (s) {
+        return String.fromCharCode(s.charCodeAt(0) - 65248)
+      })
+      .replace(/[ー−―‐]/, "-")
+    const m = zip.match(/^(\d{3})-?(\d{4})$/)
+    if (m) {
+      zip = m[1] + "-" + m[2]
+      ipt.val(zip)
       ipt.removeClass("invalid")
       ipt.addClass("valid")
     } else {
@@ -65,9 +74,16 @@ function validateAddress() {
 function validateMail() {
   const ipt = $("#mail")
   const helper = $("#mail-helper")
-  const mail = ipt.val() as string
+  let mail = ipt.val() as string
   if (mail) {
+    mail = mail
+      .replace(/[Ａ-Ｚａ-ｚ０-９＠．]/g, function (s) {
+        return String.fromCharCode(s.charCodeAt(0) - 65248)
+      })
+      .replace(/[ー−―‐]/, "-")
+      .toLowerCase()
     if (mail.match(/^[\w.]+@[\w.]+[^.]$/)) {
+      ipt.val(mail)
       ipt.removeClass("invalid")
       ipt.addClass("valid")
     } else {
@@ -99,11 +115,12 @@ function checkSubmitable() {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-declare let M: any
+declare const M: any
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-declare let window: any
+declare const window: any
 // 初期化
 $(function () {
+  // Materializeのデフォルト挙動をOFFするおまじない
   M.validate_field = window.validate_field = function () {
     return
   }
