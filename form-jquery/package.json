@@ -1,0 +1,34 @@
+{
+  "name": "form-jquery",
+  "module": "index.html",
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/jquery": "^3.5.29",
+    "eslint": "^8.56.0",
+    "prettier": "^3.2.5",
+    "typescript": "^5.0.0",
+    "typescript-eslint": "^7.0.1"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "eslintConfig": {
+    "extends": [
+      "eslint:recommended",
+      "plugin:@typescript-eslint/recommended",
+      "plugin:@typescript-eslint/stylistic"
+    ]
+  },
+  "prettier": {
+    "tabWidth": 2,
+    "trailingComma": "none",
+    "semi": false
+  },
+  "scripts": {
+    "dev": "bun build src/form.ts --outdir dist --watch"
+  },
+  "type": "module",
+  "dependencies": {
+    "jquery": "^3.7.1"
+  }
+}
