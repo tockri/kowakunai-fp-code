@@ -6,6 +6,9 @@ export interface State {
   errorMessage: string
 }
 
+/**
+ * DOMからStateを読み取る
+ */
 const getState = (ipt: JQuery): State => {
   return {
     value: ipt.val() as string,
@@ -14,6 +17,9 @@ const getState = (ipt: JQuery): State => {
   }
 }
 
+/**
+ * StateをDOMに書き戻す
+ */
 const setState = (ipt: JQuery, helper: JQuery, state: State) => {
   ipt.val(state.value)
   if (state.isValid) {
@@ -30,7 +36,7 @@ const setState = (ipt: JQuery, helper: JQuery, state: State) => {
  * 名前のバリデーション
  */
 function validateName() {
-  // StateをDOMから抽出する
+  // Stateを読み取る
   const ipt = $("#name")
   const helper = $("#name-helper")
   const state = getState(ipt)
