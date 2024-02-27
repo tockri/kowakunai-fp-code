@@ -1,15 +1,19 @@
-# form-jquery
+# kowakunai-fp/form-jquery
 
-To install dependencies:
+[こわくない関数型プログラミング 実例：jQueryフロントエンドのロジック（フォームの入力値バリデーション）](https://zenn.dev/tockri/books/dcaf6c55e64448/viewer/frontend_1_1)のソースコードです。
 
-```bash
-bun install
-```
+## セットアップ
 
-To run:
+1. [bun](https://bun.sh/)をインストール
+2. 必要なライブラリをインストール
+   ```
+   bun i
+   ```
 
-```bash
-bun run index.ts
-```
+## 使い方
 
-This project was created using `bun init` in bun v1.0.28. [Bun](https://bun.sh) is a fast all-in-one JavaScript runtime.
+1. TypeScriptをトランスパイル（watchモード）
+   ```
+   bun dev
+   ```
+2. Webブラウザでindex.htmlを開く

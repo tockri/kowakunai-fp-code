@@ -1,19 +1,45 @@
 import $ from "jquery"
 
+export interface State {
+  value: string
+  isValid: boolean
+  errorMessage: string
+}
+
+const getState = (ipt: JQuery): State => {
+  return {
+    value: ipt.val() as string,
+    isValid: false,
+    errorMessage: ""
+  }
+}
+
+const setState = (ipt: JQuery, helper: JQuery, state: State) => {
+  ipt.val(state.value)
+  if (state.isValid) {
+    ipt.addClass("valid")
+    ipt.removeClass("invalid")
+  } else {
+    ipt.addClass("invalid")
+    ipt.removeClass("valid")
+    helper.attr("data-error", state.errorMessage)
+  }
+}
+
 /**
  * 名前のバリデーション
  */
 function validateName() {
+  // StateをDOMから抽出する
   const ipt = $("#name")
   const helper = $("#name-helper")
-  if (ipt.val() !== "") {
-    ipt.removeClass("invalid")
-    ipt.addClass("valid")
-  } else {
-    ipt.removeClass("valid")
-    ipt.addClass("invalid")
-    helper.attr("data-error", "氏名を入力してください")
-  }
+  const state = getState(ipt)
+  // チェックする
+  const checked: State = state.value
+    ? { ...state, isValid: true }
+    : { ...state, isValid: false, errorMessage: "氏名を入力してください" }
+  // StateをDOMに書き戻す
+  setState(ipt, helper, checked)
   // submit-buttonのチェックもする
   checkSubmitable()
 }
@@ -131,7 +157,8 @@ function checkSubmitable() {
 declare const M: any
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 declare const window: any
-// 初期化
+
+// 初期化：テスト時に実行されない工夫
 if (typeof window === "object") {
   $(function () {
     // Materializeのデフォルト挙動をOFFするおまじない
