@@ -23,7 +23,9 @@ describe("nameLogic", () => {
   test("空", () => {
     expect(
       nameLogic({
-        value: ""
+        value: "",
+        isValid: false,
+        errorMessage: ""
       })
     ).toStrictEqual({
       value: "",
