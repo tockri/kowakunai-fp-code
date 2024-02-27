@@ -33,4 +33,18 @@ describe("nameLogic", () => {
       errorMessage: "氏名を入力してください"
     })
   })
+
+  test("空じゃない", () => {
+    expect(
+      nameLogic({
+        value: "何か書いた",
+        isValid: false,
+        errorMessage: ""
+      })
+    ).toStrictEqual({
+      value: "何か書いた",
+      isValid: true,
+      errorMessage: ""
+    })
+  })
 })
