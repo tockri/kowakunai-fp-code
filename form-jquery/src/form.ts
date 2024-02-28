@@ -79,7 +79,7 @@ function validateName() {
 /**
  * 全角を半角に変換する
  */
-const replaceZenkakuToHankaku = (state: State): State => ({
+const replaceZenkakuToHankaku: CheckFunction = (state) => ({
   ...state,
   value: state.value
     .replace(/[Ａ-Ｚａ-ｚ０-９＠．]/g, (s) =>
@@ -91,7 +91,7 @@ const replaceZenkakuToHankaku = (state: State): State => ({
 /**
  * 郵便番号にハイフンが含まれてなければ入れる
  */
-const normalizeZipCode = (state: State): State => {
+const normalizeZipCode: CheckFunction = (state) => {
   const m = state.value.match(/^(\d{3})-?(\d{4})$/)
   const value = m ? `${m[1]}-${m[2]}` : state.value
   return {
@@ -103,7 +103,7 @@ const normalizeZipCode = (state: State): State => {
 /**
  * 郵便番号が正しいかチェックする
  */
-const checkValidZipCode = (state: State): State => {
+const checkValidZipCode: CheckFunction = (state) => {
   if (!state.isValid) {
     // すでにValidでなくなっている場合は素通し
     return state
