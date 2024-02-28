@@ -50,10 +50,13 @@ const validate = (inputSel: string, helperSel: string, func: CheckFunction) => {
 /**
  * 名前の検証ロジック
  */
-const nameLogic: CheckFunction = (state) =>
-  state.value
-    ? { ...state, isValid: true }
-    : { ...state, isValid: false, errorMessage: "氏名を入力してください" }
+const nameLogic: CheckFunction = (state) => {
+  if (state.value) {
+    return state
+  } else {
+    return { ...state, isValid: false, errorMessage: "氏名を入力してください" }
+  }
+}
 
 /**
  * 名前のバリデーション
