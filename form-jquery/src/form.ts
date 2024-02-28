@@ -124,18 +124,10 @@ const checkValidZipCode = (state: State): State => {
  * 郵便番号の検証ロジック
  */
 const zipLogic: CheckFunction = (state) => {
-  if (state.value) {
-    // 変換
-    const hankaku = replaceZenkakuToHankaku(state)
-    const norm = normalizeZipCode(hankaku)
-    return checkValidZipCode(norm)
-  } else {
-    return {
-      ...state,
-      isValid: false,
-      errorMessage: "郵便番号を入力してください"
-    }
-  }
+  const required = checkNonEmpty("郵便番号を入力してください")(state)
+  const hankaku = replaceZenkakuToHankaku(required)
+  const norm = normalizeZipCode(hankaku)
+  return checkValidZipCode(norm)
 }
 
 /**
