@@ -90,13 +90,18 @@ const normalizeZipCode = (state: State): State => {
  * 郵便番号が正しいかチェックする
  */
 const checkValidZipCode = (state: State): State => {
-  if (state.isValid && state.value.match(/^(\d{3})-(\d{4})$/)) {
+  if (!state.isValid) {
+    // すでにValidでなくなっている場合は素通し
     return state
   } else {
-    return {
-      ...state,
-      isValid: false,
-      errorMessage: "000-0000の形式で入力してください"
+    if (state.value.match(/^(\d{3})-(\d{4})$/)) {
+      return state
+    } else {
+      return {
+        ...state,
+        isValid: false,
+        errorMessage: "000-0000の形式で入力してください"
+      }
     }
   }
 }
