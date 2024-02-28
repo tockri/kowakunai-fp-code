@@ -1,4 +1,5 @@
 import $ from "jquery"
+import { pipe } from "tools"
 
 export interface State {
   value: string
@@ -123,12 +124,12 @@ const checkValidZipCode: CheckFunction = (state) => {
 /**
  * 郵便番号の検証ロジック
  */
-const zipLogic: CheckFunction = (state) => {
-  const required = checkNonEmpty("郵便番号を入力してください")(state)
-  const hankaku = replaceZenkakuToHankaku(required)
-  const norm = normalizeZipCode(hankaku)
-  return checkValidZipCode(norm)
-}
+const zipLogic: CheckFunction = pipe(
+  checkNonEmpty("郵便番号を入力してください"),
+  replaceZenkakuToHankaku,
+  normalizeZipCode,
+  checkValidZipCode
+)
 
 /**
  * 郵便番号のバリデーション
