@@ -12,7 +12,7 @@ export interface State {
 const getState = (ipt: JQuery): State => {
   return {
     value: ipt.val() as string,
-    isValid: false,
+    isValid: true,
     errorMessage: ""
   }
 }
@@ -65,22 +65,57 @@ function validateName() {
 /**
  * 全角を半角に変換する
  */
-const replaceZenkakuToHankaku = (str: string): string =>
-  str
+const replaceZenkakuToHankaku = (state: State): State => ({
+  ...state,
+  value: state.value
     .replace(/[Ａ-Ｚａ-ｚ０-９＠．]/g, (s) =>
       String.fromCharCode(s.charCodeAt(0) - 65248)
     )
     .replace(/[ー−―‐]/g, "-")
+})
 
 /**
  * 郵便番号にハイフンが含まれてなければ入れる
  */
-const normalizeZipCode = (str: string): string => {
-  const m = str.match(/^(\d{3})-?(\d{4})$/)
-  if (m) {
-    return `${m[1]}-${m[2]}`
+const normalizeZipCode = (state: State): State => {
+  const m = state.value.match(/^(\d{3})-?(\d{4})$/)
+  const value = m ? `${m[1]}-${m[2]}` : state.value
+  return {
+    ...state,
+    value
+  }
+}
+
+/**
+ * 郵便番号が正しいかチェックする
+ */
+const checkValidZipCode = (state: State): State => {
+  if (state.isValid && state.value.match(/^(\d{3})-(\d{4})$/)) {
+    return state
   } else {
-    return str
+    return {
+      ...state,
+      isValid: false,
+      errorMessage: "000-0000の形式で入力してください"
+    }
+  }
+}
+
+/**
+ * 郵便番号の検証ロジック
+ */
+const zipLogic: CheckFunction = (state) => {
+  if (state.value) {
+    // 変換
+    const hankaku = replaceZenkakuToHankaku(state)
+    const norm = normalizeZipCode(hankaku)
+    return checkValidZipCode(norm)
+  } else {
+    return {
+      ...state,
+      isValid: false,
+      errorMessage: "郵便番号を入力してください"
+    }
   }
 }
 
@@ -88,30 +123,9 @@ const normalizeZipCode = (str: string): string => {
  * 郵便番号のバリデーション
  */
 function validateZip() {
-  const ipt = $("#zip")
-  const helper = $("#zip-helper")
-  let zip = ipt.val() as string
-  if (zip) {
-    // 全角→半角に変換
-    zip = replaceZenkakuToHankaku(zip)
-    zip = normalizeZipCode(zip)
-    if (zip.match(/^(\d{3})-(\d{4})$/)) {
-      ipt.val(zip)
-      ipt.removeClass("invalid")
-      ipt.addClass("valid")
-    } else {
-      ipt.removeClass("valid")
-      ipt.addClass("invalid")
-      helper.attr("data-error", "000-0000の形式で入力してください")
-    }
-  } else {
-    ipt.removeClass("valid")
-    ipt.addClass("invalid")
-    helper.attr("data-error", "郵便番号を入力してください")
-  }
-  // submit-buttonのチェックもする
-  checkSubmitable()
+  validate("#zip", "#zip-helper", zipLogic)
 }
+
 /**
  * 住所のバリデーション
  */
@@ -199,5 +213,7 @@ if (typeof window === "object") {
 export const Form_forTestOnly = {
   replaceZenkakuToHankaku,
   normalizeZipCode,
-  nameLogic
+  nameLogic,
+  checkValidZipCode,
+  zipLogic
 }
