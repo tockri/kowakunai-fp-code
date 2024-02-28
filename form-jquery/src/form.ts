@@ -48,18 +48,27 @@ const validate = (inputSel: string, helperSel: string, func: CheckFunction) => {
 }
 
 /**
+ * 必須チェック
+ */
+const checkNonEmpty =
+  (errorMessage: string): CheckFunction =>
+  (state) => {
+    if (state.value) {
+      return state
+    } else {
+      return {
+        ...state,
+        isValid: false,
+        errorMessage
+      }
+    }
+  }
+
+/**
  * 名前の検証ロジック
  */
 const nameLogic: CheckFunction = (state) => {
-  if (state.value) {
-    return state
-  } else {
-    return {
-      ...state,
-      isValid: false,
-      errorMessage: "氏名を入力してください"
-    }
-  }
+  return checkNonEmpty("氏名を入力してください")(state)
 }
 
 /**
