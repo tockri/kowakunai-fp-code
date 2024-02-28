@@ -67,9 +67,7 @@ const checkNonEmpty =
 /**
  * 名前の検証ロジック
  */
-const nameLogic: CheckFunction = (state) => {
-  return checkNonEmpty("氏名を入力してください")(state)
-}
+const nameLogic = checkNonEmpty("氏名を入力してください")
 
 /**
  * 名前のバリデーション
