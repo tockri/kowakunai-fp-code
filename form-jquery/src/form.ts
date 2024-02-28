@@ -54,7 +54,11 @@ const nameLogic: CheckFunction = (state) => {
   if (state.value) {
     return state
   } else {
-    return { ...state, isValid: false, errorMessage: "氏名を入力してください" }
+    return {
+      ...state,
+      isValid: false,
+      errorMessage: "氏名を入力してください"
+    }
   }
 }
 
