@@ -101,25 +101,32 @@ const normalizeZipCode: CheckFunction = (state) => {
   }
 }
 
-/**
- * 郵便番号が正しいかチェックする
- */
-const checkValidZipCode: CheckFunction = (state) => {
-  if (!state.isValid) {
-    // すでにValidでなくなっている場合は素通し
-    return state
-  } else {
-    if (state.value.match(/^(\d{3})-(\d{4})$/)) {
+const checkPattern =
+  (pattern: RegExp, errorMessage: string): CheckFunction =>
+  (state) => {
+    if (!state.isValid) {
+      // すでにValidでなくなっている場合は素通し
       return state
     } else {
-      return {
-        ...state,
-        isValid: false,
-        errorMessage: "000-0000の形式で入力してください"
+      if (state.value.match(pattern)) {
+        return state
+      } else {
+        return {
+          ...state,
+          isValid: false,
+          errorMessage
+        }
       }
     }
   }
-}
+
+/**
+ * 郵便番号が正しいかチェックする
+ */
+const checkValidZipCode: CheckFunction = checkPattern(
+  /^(\d{3})-(\d{4})$/,
+  "000-0000の形式で入力してください"
+)
 
 /**
  * 郵便番号の検証ロジック
@@ -161,22 +168,10 @@ const convertToLowercase: CheckFunction = (state) => ({
 /**
  * メールアドレスの形式チェック
  */
-const checkValidMail: CheckFunction = (state) => {
-  if (!state.isValid) {
-    // すでにValidでなくなっている場合は素通し
-    return state
-  } else {
-    if (state.value.match(/^[\w.]+@[\w.]+[^.]$/)) {
-      return state
-    } else {
-      return {
-        ...state,
-        isValid: false,
-        errorMessage: "メールアドレスの形式が正しくありません"
-      }
-    }
-  }
-}
+const checkValidMail: CheckFunction = checkPattern(
+  /^[\w.]+@[\w.]+[^.]$/,
+  "メールアドレスの形式が正しくありません"
+)
 
 /**
  * メールアドレスの検証ロジック
