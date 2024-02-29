@@ -151,30 +151,48 @@ function validateAddress() {
 }
 
 /**
+ * 大文字→小文字への変換
+ */
+const convertToLowercase: CheckFunction = (state) => ({
+  ...state,
+  value: state.value.toLowerCase()
+})
+
+/**
+ * メールアドレスの形式チェック
+ */
+const checkValidMail: CheckFunction = (state) => {
+  if (!state.isValid) {
+    // すでにValidでなくなっている場合は素通し
+    return state
+  } else {
+    if (state.value.match(/^[\w.]+@[\w.]+[^.]$/)) {
+      return state
+    } else {
+      return {
+        ...state,
+        isValid: false,
+        errorMessage: "メールアドレスの形式が正しくありません"
+      }
+    }
+  }
+}
+
+/**
+ * メールアドレスの検証ロジック
+ */
+const mailLogic = pipe(
+  checkNonEmpty("メールアドレスを入力してください"),
+  replaceZenkakuToHankaku,
+  convertToLowercase,
+  checkValidMail
+)
+
+/**
  * メールアドレスのバリデーション
  */
 function validateMail() {
-  const ipt = $("#mail")
-  const helper = $("#mail-helper")
-  let mail = ipt.val() as string
-  if (mail) {
-    mail = replaceZenkakuToHankaku(mail).toLowerCase()
-    if (mail.match(/^[\w.]+@[\w.]+[^.]$/)) {
-      ipt.val(mail)
-      ipt.removeClass("invalid")
-      ipt.addClass("valid")
-    } else {
-      ipt.removeClass("valid")
-      ipt.addClass("invalid")
-      helper.attr("data-error", "メールアドレスの形式が正しくありません。")
-    }
-  } else {
-    ipt.removeClass("valid")
-    ipt.addClass("invalid")
-    helper.attr("data-error", "メールアドレスを入力してください")
-  }
-  // submit-buttonのチェックもする
-  checkSubmitable()
+  validate("#mail", "#mail-helper", mailLogic)
 }
 
 /**
@@ -222,5 +240,8 @@ export const Form_forTestOnly = {
   nameLogic,
   checkValidZipCode,
   zipLogic,
-  addressLogic
+  addressLogic,
+  convertToLowercase,
+  checkValidMail,
+  mailLogic
 }

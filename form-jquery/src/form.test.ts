@@ -6,7 +6,10 @@ const {
   nameLogic,
   checkValidZipCode,
   zipLogic,
-  addressLogic
+  addressLogic,
+  convertToLowercase,
+  checkValidMail,
+  mailLogic
 } = Form_forTestOnly
 
 const state = (value: string, isValid = true, errorMessage = ""): State => ({
@@ -96,5 +99,54 @@ describe("addressLogic", () => {
 
   test("空じゃない", () => {
     expect(addressLogic(state("何か書いた"))).toStrictEqual(state("何か書いた"))
+  })
+})
+
+describe("convertToLowercase", () => {
+  test("大文字", () => {
+    expect(convertToLowercase(state("AbcDあいうえお"))).toStrictEqual(
+      state("abcdあいうえお")
+    )
+  })
+})
+
+describe("checkValidMail", () => {
+  test("正しいメールアドレス形式", () => {
+    expect(checkValidMail(state("em@c.com"))).toStrictEqual(state("em@c.com"))
+  })
+  test("正しくない", () => {
+    expect(checkValidMail(state("em@com."))).toStrictEqual(
+      state("em@com.", false, "メールアドレスの形式が正しくありません")
+    )
+    expect(checkValidMail(state("emあいうえお@com"))).toStrictEqual(
+      state("emあいうえお@com", false, "メールアドレスの形式が正しくありません")
+    )
+    expect(checkValidMail(state("com"))).toStrictEqual(
+      state("com", false, "メールアドレスの形式が正しくありません")
+    )
+  })
+})
+
+describe("mailLogic", () => {
+  test("正しいメールアドレス形式", () => {
+    expect(mailLogic(state("em@c.com"))).toStrictEqual(state("em@c.com"))
+    expect(mailLogic(state("EM@c.com"))).toStrictEqual(state("em@c.com"))
+    expect(mailLogic(state("ＡＢ@c.com"))).toStrictEqual(state("ab@c.com"))
+  })
+  test("空", () => {
+    expect(mailLogic(state(""))).toStrictEqual(
+      state("", false, "メールアドレスを入力してください")
+    )
+  })
+  test("正しくない", () => {
+    expect(mailLogic(state("em@com."))).toStrictEqual(
+      state("em@com.", false, "メールアドレスの形式が正しくありません")
+    )
+    expect(mailLogic(state("ＡＢあいうえお@com"))).toStrictEqual(
+      state("abあいうえお@com", false, "メールアドレスの形式が正しくありません")
+    )
+    expect(mailLogic(state("COM"))).toStrictEqual(
+      state("com", false, "メールアドレスの形式が正しくありません")
+    )
   })
 })
