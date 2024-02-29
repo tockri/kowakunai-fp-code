@@ -101,6 +101,9 @@ const normalizeZipCode: CheckFunction = (state) => {
   }
 }
 
+/**
+ * 正規表現に一致していなければエラーにするCheckFunctionを返す
+ */
 const checkPattern =
   (pattern: RegExp, errorMessage: string): CheckFunction =>
   (state) => {
