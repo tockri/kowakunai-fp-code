@@ -138,22 +138,13 @@ function validateZip() {
   validate("#zip", "#zip-helper", zipLogic)
 }
 
+const addressLogic = checkNonEmpty("住所を入力してください")
+
 /**
  * 住所のバリデーション
  */
 function validateAddress() {
-  const ipt = $("#address")
-  const helper = $("#address-helper")
-  if (ipt.val()) {
-    ipt.removeClass("invalid")
-    ipt.addClass("valid")
-  } else {
-    ipt.removeClass("valid")
-    ipt.addClass("invalid")
-    helper.attr("data-error", "住所を入力してください")
-  }
-  // submit-buttonのチェックもする
-  checkSubmitable()
+  validate("#address", "#address-helper", addressLogic)
 }
 
 /**
