@@ -138,6 +138,9 @@ function validateZip() {
   validate("#zip", "#zip-helper", zipLogic)
 }
 
+/**
+ * 住所の検証ロジック
+ */
 const addressLogic = checkNonEmpty("住所を入力してください")
 
 /**
