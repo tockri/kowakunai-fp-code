@@ -5,7 +5,8 @@ const {
   normalizeZipCode,
   nameLogic,
   checkValidZipCode,
-  zipLogic
+  zipLogic,
+  addressLogic
 } = Form_forTestOnly
 
 const state = (value: string, isValid = true, errorMessage = ""): State => ({
@@ -83,5 +84,17 @@ describe("nameLogic", () => {
 
   test("空じゃない", () => {
     expect(nameLogic(state("何か書いた"))).toStrictEqual(state("何か書いた"))
+  })
+})
+
+describe("addressLogic", () => {
+  test("空", () => {
+    expect(addressLogic(state(""))).toStrictEqual(
+      state("", false, "住所を入力してください")
+    )
+  })
+
+  test("空じゃない", () => {
+    expect(addressLogic(state("何か書いた"))).toStrictEqual(state("何か書いた"))
   })
 })

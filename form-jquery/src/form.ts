@@ -218,5 +218,6 @@ export const Form_forTestOnly = {
   normalizeZipCode,
   nameLogic,
   checkValidZipCode,
-  zipLogic
+  zipLogic,
+  addressLogic
 }
