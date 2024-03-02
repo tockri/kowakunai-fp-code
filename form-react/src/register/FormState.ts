@@ -29,27 +29,6 @@ export type Action = Readonly<{
 type CheckReducer = (state: State, action: Action) => State
 
 /**
- * Atomインスタンスを生成する
- */
-const makeAtom = (reducer: CheckReducer) => {
-  // 値を保持するための隠しAtom
-  const store = atom<State>({
-    value: "",
-    isValid: true,
-    errorMessage: "",
-  })
-  // Reducerを扱うインターフェイスとなるAtom
-  return atom<State, [Action], void>(
-    (get) => get(store),
-    (get, set, action) => {
-      const curr = get(store)
-      const nextValue = reducer(curr, action)
-      set(store, nextValue)
-    },
-  )
-}
-
-/**
  * CheckFunctionを組み合わせてCheckReducerを返す
  * @param options onChange: changeアクションで実行する関数, onBlur: blurアクションで実行する関数
  */
@@ -71,6 +50,27 @@ const makeReducer =
       return state
     }
   }
+
+/**
+ * Atomインスタンスを生成する
+ */
+const makeAtom = (reducer: CheckReducer) => {
+  // 値を保持するための隠しAtom
+  const store = atom<State>({
+    value: "",
+    isValid: true,
+    errorMessage: "",
+  })
+  // Reducerを扱うインターフェイスとなるAtom
+  return atom<State, [Action], void>(
+    (get) => get(store),
+    (get, set, action) => {
+      const curr = get(store)
+      const nextValue = reducer(curr, action)
+      set(store, nextValue)
+    },
+  )
+}
 
 /**
  * 必須チェック
