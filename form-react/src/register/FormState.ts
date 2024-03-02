@@ -28,17 +28,11 @@ type CheckReducer = (state: State, action: Action) => State
  */
 const makeAtom = (reducer: CheckReducer) => {
   // 値を保持するための隠しAtom
-  const store = atom<State>(
-    // 初期値に一回changeアクションを適用してエラー状態にする
-    reducer(
-      {
-        value: "",
-        isValid: true,
-        errorMessage: "",
-      },
-      { type: "change", value: "" },
-    ),
-  )
+  const store = atom<State>({
+    value: "",
+    isValid: true,
+    errorMessage: "",
+  })
   // Reducerを扱うインターフェイスとなるAtom
   return atom<State, [Action], void>(
     (get) => get(store),
@@ -68,15 +62,13 @@ const makeReducer =
     const nextState: State = {
       ...state,
       value: action.value,
-      isValid: true,
-      errorMessage: "",
     }
     if (action.type === "change" && options.onChange) {
       return options.onChange(nextState)
     } else if (action.type === "blur" && options.onBlur) {
       return options.onBlur(nextState)
     } else {
-      return nextState
+      return state
     }
   }
 
@@ -87,7 +79,11 @@ const checkNonEmpty =
   (errorMessage: string): CheckFunction =>
   (state) => {
     if (state.value) {
-      return state
+      return {
+        value: state.value,
+        isValid: true,
+        errorMessage: "",
+      }
     } else {
       return {
         ...state,
@@ -200,7 +196,7 @@ const convertToLowercase: CheckFunction = (state) => ({
  * メールアドレスの形式チェック
  */
 const checkValidMail: CheckFunction = checkPattern(
-  /^[\w.]+@[\w.]+[^.]$/,
+  /^[\w.]+@[\w.]+\.\w+$/,
   "メールアドレスの形式が正しくありません",
 )
 
@@ -221,7 +217,7 @@ const mailAtom = makeAtom(mailReducer)
  * 渡されたStateがすべてisValue===trueならtrueを返す
  */
 const allValid = (...states: ReadonlyArray<State>): boolean =>
-  states.every((s) => s.isValid)
+  states.every((s) => s.value && s.isValid)
 
 /**
  * 送信ボタンのAtom
