@@ -11,6 +11,11 @@ export type State = Readonly<{
 }>
 
 /**
+ * Stateを検証する関数
+ */
+type CheckFunction = (state: State) => State
+
+/**
  * プロパティに発生するアクション
  */
 export type Action = Readonly<{
@@ -43,11 +48,6 @@ const makeAtom = (reducer: CheckReducer) => {
     },
   )
 }
-
-/**
- * Stateを検証する関数
- */
-type CheckFunction = (state: State) => State
 
 /**
  * CheckFunctionを組み合わせてCheckReducerを返す
