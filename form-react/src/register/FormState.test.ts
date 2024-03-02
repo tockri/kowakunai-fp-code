@@ -185,7 +185,7 @@ describe("mailReducer", () => {
 
 describe("allValid", () => {
   test("true", () => {
-    expect(allValid(state(""), state("b"), state("c"))).toBe(true)
+    expect(allValid(state("a"), state("b"), state("c"))).toBe(true)
   })
   test("false", () => {
     expect(allValid(state(""), state("b", false), state("c"))).toBe(false)
