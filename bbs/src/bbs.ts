@@ -41,8 +41,8 @@ export type MessageNode = MessageDao & {
 
 router.get("/", authenticated, async (req, res) => {
   const [view, params] = await indexLogic(
-    prisma.messageDao.findMany,
-    req.query.query as string | undefined
+    req.query.query as string | undefined,
+    prisma.messageDao.findMany
   )
   res.render(view, params)
 })
@@ -56,8 +56,8 @@ type IndexLogicResult = [
 ]
 
 const indexLogic = (
-  findMany: (args: Prisma.MessageDaoFindManyArgs) => Promise<MessageDao[]>,
-  query: string | undefined
+  query: string | undefined,
+  findMany: (args: Prisma.MessageDaoFindManyArgs) => Promise<MessageDao[]>
 ): Promise<IndexLogicResult> =>
   pipeAsync(
     makeFindManyArgsForMessageList,
