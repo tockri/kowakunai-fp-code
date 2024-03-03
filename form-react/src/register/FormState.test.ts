@@ -188,7 +188,7 @@ describe("allValid", () => {
     expect(allValid(state("a"), state("b"), state("c"))).toBe(true)
   })
   test("false", () => {
-    expect(allValid(state(""), state("b", false), state("c"))).toBe(false)
+    expect(allValid(state(""), state("b"), state("c"))).toBe(false)
     expect(allValid(state("a"), state("b", false), state("c"))).toBe(false)
   })
 })
