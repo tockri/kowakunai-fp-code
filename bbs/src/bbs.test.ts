@@ -41,7 +41,7 @@ describe("bbs#indexLogic", () => {
         orderBy: { id: Prisma.SortOrder.asc }
       })
       return Promise.resolve([message1, message2])
-    })("test")
+    }, "test")
     expect(view).toBe("index")
     expect(params).toStrictEqual({
       query: "test",
@@ -56,7 +56,7 @@ describe("bbs#indexLogic", () => {
         orderBy: { id: Prisma.SortOrder.asc }
       })
       return Promise.resolve([message1, message2])
-    })(undefined)
+    }, undefined)
     expect(view).toBe("index")
     expect(params).toStrictEqual({
       query: undefined,
@@ -71,7 +71,7 @@ describe("bbs#indexLogic", () => {
         orderBy: { id: Prisma.SortOrder.asc }
       })
       return Promise.resolve([message2, message3, message4])
-    })("")
+    }, "")
     expect(view).toBe("index")
     expect(params).toStrictEqual({
       query: "",
