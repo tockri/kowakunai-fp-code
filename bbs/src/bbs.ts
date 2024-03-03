@@ -3,7 +3,7 @@ import { MessageDao, Prisma, PrismaClient } from "@prisma/client"
 import { body } from "express-validator"
 import { authenticated } from "./authentication"
 import { validated } from "./validation"
-import { pipeAsync } from "./pipeAsync"
+import { pipeAsync } from "tools"
 
 const prisma = new PrismaClient()
 
@@ -41,7 +41,7 @@ export type MessageNode = MessageDao & {
 
 router.get("/", authenticated, (req, res) =>
   pipeAsync(
-    req.query.query as string | undefined,
+    () => req.query.query as string | undefined,
     indexLogic(prisma.messageDao.findMany),
     (result) => res.render(...result)
   )
@@ -59,12 +59,11 @@ const indexLogic =
   (findMany: (args: Prisma.MessageDaoFindManyArgs) => Promise<MessageDao[]>) =>
   (query: string | undefined): Promise<IndexLogicResult> =>
     pipeAsync(
-      query,
       makeFindManyArgsForMessageList,
       findMany,
       buildMessageNodes,
-      (messages) => ["index", { messages, query }]
-    )
+      (messages) => ["index", { messages, query }] as IndexLogicResult
+    )(query)
 
 /**
  * @param query req.query.query
@@ -120,7 +119,7 @@ router.post(
   validated,
   (req, res) =>
     pipeAsync(
-      req.body as PostBody,
+      () => req.body as PostBody,
       makeCreateArgsForPostMessage,
       prisma.messageDao.create,
       () => res.redirect("/")
