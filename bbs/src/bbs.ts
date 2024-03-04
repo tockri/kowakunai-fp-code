@@ -87,24 +87,21 @@ const makeFindManyArgsForMessageList = (
  * @param messageList DBから取得した配列
  * @returns ツリー構造
  */
-const buildMessageNodes = (messageList: MessageDao[]): MessageNode[] => {
-  console.log({ messageList })
-  const nodeMap: Map<number, MessageNode> = new Map<number, MessageNode>()
-  for (const message of messageList) {
-    nodeMap.set(message.id, { ...message, children: [] })
-  }
-
-  // ツリー構造にする
-  const nodes: MessageNode[] = []
-  for (const node of nodeMap.values()) {
+const buildMessageNodes = (
+  messageList: ReadonlyArray<MessageDao>
+): ReadonlyArray<MessageNode> => {
+  const nodeMap = new Map<number, MessageNode>(
+    messageList.map((m) => [m.id, { ...m, children: [] }])
+  )
+  return Array.from(nodeMap.values()).flatMap((node) => {
     const parent = (node.parentId && nodeMap.get(node.parentId)) || null
     if (parent) {
       parent.children.push(node)
+      return []
     } else {
-      nodes.push(node)
+      return node
     }
-  }
-  return nodes
+  })
 }
 
 interface PostBody {
