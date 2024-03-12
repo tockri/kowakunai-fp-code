@@ -1,0 +1,79 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model ItemDao {
+  id  Int  @id @default(autoincrement())
+  name String
+  description  String @db.Text
+  price  Int? 
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @map("updated_at")
+
+  photoes PhotoDao[] @relation("ItemPhoto")
+  orderItems OrderItemDao[]
+  cartItems CartItemDao[]
+  @@map("item")
+}
+
+model PhotoDao {
+  id Int @id @default(autoincrement())
+  itemId Int @map("item_id")
+  mimeType String @map("mime_type")
+  width Int
+  height Int
+
+  item ItemDao @relation("ItemPhoto", fields: [itemId], references: [id])
+  @@map("photo")
+}
+
+model OrderDao {
+  id Int @id @default(autoincrement())
+  userId Int @map("user_id")
+  priceAmount Int 
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user UserDao @relation("OrderUser", fields: [userId], references: [id])
+  orderItems OrderItemDao[] @relation("OrderItem")
+  
+  @@map("order")
+}
+
+model OrderItemDao {
+  id Int @id @default(autoincrement())
+  orderId Int @map("order_id")
+  itemId Int @map("item_id")
+  itemCount Int @map("item_count")
+  price Int
+
+  order OrderDao @relation("OrderItem", fields: [orderId], references: [id])
+  item ItemDao @relation(fields: [itemId], references: [id])
+  @@map("order_item")
+}
+
+model UserDao {
+  id Int @id @default(autoincrement())
+  name String
+  email String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  orders OrderDao[] @relation("OrderUser")
+  @@map("user")
+}
+
+model CartItemDao {
+  id Int @id @default(autoincrement())
+
+  itemId Int @map("item_id")
+  itemCount Int @map("item_count")
+  price Int
+  createdAt DateTime @default(now()) @map("created_at")
+
+  item ItemDao @relation(fields: [itemId], references: [id])
+  @@map("cart_item")
+}
