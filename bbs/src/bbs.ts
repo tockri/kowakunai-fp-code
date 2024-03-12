@@ -88,8 +88,8 @@ const makeFindManyArgsForMessageList = (
  * @returns ツリー構造
  */
 const buildMessageNodes = (
-  messageList: ReadonlyArray<MessageDao>
-): ReadonlyArray<MessageNode> => {
+  messageList: readonly MessageDao[]
+): readonly MessageNode[] => {
   const nodeMap = new Map<number, MessageNode>(
     messageList.map((m) => [m.id, { ...m, children: [] }])
   )
