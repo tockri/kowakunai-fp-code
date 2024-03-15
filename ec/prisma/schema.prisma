@@ -36,11 +36,11 @@ model OrderDao {
   id Int @id @default(autoincrement())
   userId Int @map("user_id")
   priceAmount Int 
+  taxAmount Int
   createdAt DateTime @default(now()) @map("created_at")
 
   user UserDao @relation("OrderUser", fields: [userId], references: [id])
   orderItems OrderItemDao[] @relation("OrderItem")
-  
   @@map("order")
 }
 
@@ -50,6 +50,7 @@ model OrderItemDao {
   itemId Int @map("item_id")
   itemCount Int @map("item_count")
   price Int
+  tax Int
 
   order OrderDao @relation("OrderItem", fields: [orderId], references: [id])
   item ItemDao @relation(fields: [itemId], references: [id])
@@ -72,6 +73,7 @@ model CartItemDao {
   itemId Int @map("item_id")
   itemCount Int @map("item_count")
   price Int
+  tax Int
   createdAt DateTime @default(now()) @map("created_at")
 
   item ItemDao @relation(fields: [itemId], references: [id])
