@@ -1,5 +1,5 @@
-import React from "react";
-import { User } from "./User";
+import React from "react"
+import { User } from "./User"
 
 const AdminPage: React.FC = () => {
   return (
@@ -9,6 +9,6 @@ const AdminPage: React.FC = () => {
         <User userId={101} />
       </React.Suspense>
     </div>
-  );
-};
-export default AdminPage;
+  )
+}
+export default AdminPage
