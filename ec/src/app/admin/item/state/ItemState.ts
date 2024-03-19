@@ -1,10 +1,10 @@
-import { atomFamily } from "jotai/utils"
 import { atom } from "jotai"
-import { ItemDao } from "@prisma/client"
+import { atomFamily } from "jotai/utils"
+import { Item } from "../../../api/items/types"
 
 const listAtom = atom(async () => {
-  const res = await fetch("/admin/item/api")
-  const list: readonly ItemDao[] = await res.json()
+  const res = await fetch("/api/items")
+  const list: readonly Item[] = await res.json()
   return list
 })
 

@@ -1,8 +1,11 @@
-import prisma from "@/lib/prisma"
-import React from "react"
+"use client"
 
-export const ItemListView: React.FC = async () => {
-  const list = await prisma.itemDao.findMany()
+import { useAtomValue } from "jotai"
+import React from "react"
+import { ItemState } from "./state/ItemState"
+
+export const ItemListView: React.FC = () => {
+  const list = useAtomValue(ItemState.listAtom)
   return (
     <div>
       <ul>
