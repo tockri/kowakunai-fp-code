@@ -1,15 +1,18 @@
 import prisma from "../../../lib/prisma"
+import { RestApi } from "../RestApi"
 import { Item } from "./types"
 
 const pageSize = 20
 
-export const GET = async (req: Request) => {
-  const query = new URL(req.url).searchParams
-  const page = query.get("page")
-
-  const list: readonly Item[] = await prisma.itemDao.findMany({
-    take: pageSize,
-    skip: (page && (parseInt(page) - 1) * pageSize) || 0
-  })
-  return Response.json(list)
+type GetParams = {
+  page: string
 }
+
+export const GET = RestApi(async (req, params: GetParams) => {
+  const page = parseInt(params.page || "0")
+  const items: readonly Item[] = await prisma.itemDao.findMany({
+    take: pageSize,
+    skip: (page - 1) * pageSize
+  })
+  return { items }
+})
