@@ -9,11 +9,9 @@ import java.util.List;
 
 @Table("order")
 public record Order(
-        @Id Long id,
-        String customerName,
-        LocalDateTime orderDate,
-        long totalAmount,
-        @MappedCollection(idColumn = "ORDER_ID", keyColumn = "ORDER_KEY")
-        List<OrderDetail> details
-) {
+                @Id Long id,
+                String customerName,
+                LocalDateTime orderTime,
+                long totalAmount,
+                @MappedCollection(idColumn = "ORDER_ID", keyColumn = "ORDER_KEY") List<OrderDetail> details) {
 }

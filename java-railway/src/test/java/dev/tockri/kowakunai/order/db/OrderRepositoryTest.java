@@ -30,15 +30,9 @@ class OrderRepositoryTest {
 
     @Test
     void 注文を明細付きで保存できる() {
-        var details = List.of(
-                new OrderDetail(1L, "紅茶 50g", 3, 600),
-                new OrderDetail(2L, "クッキー", 1, 450));
-        var order = new Order(
-                null,
-                "佐藤次郎",
-                LocalDateTime.of(2026, 3, 7, 9, 0),
-                2250L,
-                details);
+        var details =
+                List.of(new OrderDetail(1L, "紅茶 50g", 3, 600), new OrderDetail(2L, "クッキー", 1, 450));
+        var order = new Order(null, "佐藤次郎", LocalDateTime.of(2026, 3, 7, 9, 0), 2250L, details);
 
         var saved = orderRepository.save(order);
 

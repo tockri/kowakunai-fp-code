@@ -31,31 +31,22 @@ public class OrderService {
     private final ProductRepository productRepository;
     private final StockRepository stockRepository;
 
-    record ValidOrder(
-            String customerName,
-            LocalDateTime orderDateTime,
-            List<ValidOrderDetail> details,
-            long totalAmount) {
+    record ValidOrder(String customerName, LocalDateTime orderDateTime,
+            List<ValidOrderDetail> details, long totalAmount) {
     }
 
-    record ValidOrderDetail(
-            int index,
-            Product product,
-            int quantity,
-            int unitPrice) {
+    record ValidOrderDetail(int index, Product product, int quantity, int unitPrice) {
     }
 
     public OrderResponse placeOrder(@Validated OrderRequest request) {
         var result = validate(request)
                 .then(this::checkStock)
-                .then(this::saveOrder);
+                .then(this::saveOrder)
+                .then(this::sendEmail);
 
         return switch (result) {
-            case Success<Order>(var order) -> new OrderSuccessResponse(
-                    order.id(),
-                    order.customerName(),
-                    order.orderDate(),
-                    order.totalAmount());
+            case Success<Order>(var order) -> new OrderSuccessResponse(order.id(),
+                    order.customerName(), order.orderTime(), order.totalAmount());
             case Failure<Order>(var errors) -> new OrderFailureResponse(errors);
         };
     }
@@ -73,15 +64,12 @@ public class OrderService {
                     new ValidOrder(request.customerName(), request.orderDateTime(), validDetails,
                             calcTotalAmount(validDetails)));
 
-            case Failure<List<ValidOrderDetail>>(var detailErrors) ->
-                new Failure<>(detailErrors);
+            case Failure<List<ValidOrderDetail>> failure -> failure.cast();
         };
     }
 
     private static long calcTotalAmount(List<ValidOrderDetail> details) {
-        return details.stream()
-                .mapToLong(d -> d.quantity() * d.unitPrice())
-                .sum();
+        return details.stream().mapToLong(d -> d.quantity() * d.unitPrice()).sum();
     }
 
     // 明細一つぶんのバリデーションを行う
@@ -91,8 +79,8 @@ public class OrderService {
         if (productOpt.isEmpty()) {
             return new Failure<>(List.of(String.format("注文詳細[%d]の商品名が不正です", detail.index())));
         }
-        return new Success<>(
-                new ValidOrderDetail(detail.index(), productOpt.get(), detail.quantity(), detail.unitPrice()));
+        return new Success<>(new ValidOrderDetail(detail.index(), productOpt.get(),
+                detail.quantity(), detail.unitPrice()));
     }
 
     // 在庫をチェックする
@@ -100,15 +88,16 @@ public class OrderService {
         var details = Result.collect(order.details(), this::checkDetailStock);
         return switch (details) {
             case Success<List<ValidOrderDetail>> success -> new Success<>(order);
-            case Failure<List<ValidOrderDetail>>(var errors) -> new Failure<>(errors);
+            case Failure<List<ValidOrderDetail>> failure -> failure.cast();
         };
     }
 
     // 明細一つぶんの在庫をチェックする
-    Result<ValidOrderDetail> checkDetailStock(ValidOrderDetail d) {
+    private Result<ValidOrderDetail> checkDetailStock(ValidOrderDetail d) {
         var stock = stockRepository.findByProductId(d.product().id());
         if (stock.isEmpty() || stock.get().quantity() < d.quantity()) {
-            return new Failure<>(List.of(String.format("注文詳細[%d]の商品「%s」の在庫が不足しています", d.index(), d.product().name())));
+            return new Failure<>(List.of(
+                    String.format("注文詳細[%d]の商品「%s」の在庫が不足しています", d.index(), d.product().name())));
         }
         return new Success<>(d);
     }
@@ -128,6 +117,17 @@ public class OrderService {
         var details = order.details().stream()
                 .map(d -> new OrderDetail(null, d.product().name(), d.quantity(), d.unitPrice()))
                 .toList();
-        return new Order(null, order.customerName(), order.orderDateTime(), order.totalAmount(), details);
+        return new Order(null, order.customerName(), order.orderDateTime(), order.totalAmount(),
+                details);
+    }
+
+    // メールを送信する
+    Result<Order> sendEmail(Order order) {
+        try {
+            // ここではメール送信処理を省略
+            return new Success<>(order);
+        } catch (Exception e) {
+            return new Failure<>(List.of("注文は完了しましたが、注文完了メールの送信に失敗しました。注文履歴画面にてご確認ください。"));
+        }
     }
 }
