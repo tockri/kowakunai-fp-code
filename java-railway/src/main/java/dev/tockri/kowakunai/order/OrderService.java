@@ -36,24 +36,33 @@ public class OrderService {
     }
 
     public Result<Order> placeOrder(@Validated OrderRequest request) {
-        return validate(request)
+        return validateOrderTime(request)
+                .then(this::validateProductName)
                 .then(this::checkStock)
                 .then(this::saveOrder)
                 .then(this::sendEmail);
     }
 
-    // 注文全体のバリデーションを行う
-    Result<ValidOrder> validate(OrderRequest request) {
+    // 注文日時のバリデーションを行う
+    Result<OrderRequest> validateOrderTime(OrderRequest request) {
         if (request.orderDateTime().isAfter(LocalDateTime.now(clock))) {
             return new Failure<>(List.of("注文日時が不正です"));
         }
+        return new Success<>(request);
+    }
 
-        var details = Result.collect(request.details(), this::validateDetail);
+    // 商品名のバリデーションを行う
+    Result<ValidOrder> validateProductName(OrderRequest request) {
+        var detailsResult = Result.collect(request.details(), this::validateDetailProductName);
 
-        return switch (details) {
-            case Success<List<ValidOrderDetail>>(var validDetails) -> new Success<>(
-                    new ValidOrder(request.customerName(), request.orderDateTime(), validDetails,
-                            calcTotalAmount(validDetails)));
+        return switch (detailsResult) {
+            case Success<List<ValidOrderDetail>>(var validDetails) ->
+                new Success<>(
+                        new ValidOrder(
+                                request.customerName(),
+                                request.orderDateTime(),
+                                validDetails,
+                                calcTotalAmount(validDetails)));
 
             case Failure<List<ValidOrderDetail>> failure -> failure.cast();
         };
@@ -64,7 +73,7 @@ public class OrderService {
     }
 
     // 明細一つぶんのバリデーションを行う
-    Result<ValidOrderDetail> validateDetail(OrderRequestDetail detail) {
+    Result<ValidOrderDetail> validateDetailProductName(OrderRequestDetail detail) {
         var productOpt = productRepository.findByName(detail.productName());
 
         if (productOpt.isEmpty()) {

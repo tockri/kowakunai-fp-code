@@ -112,25 +112,21 @@ class OrderServiceTest {
     }
 
     @Nested
-    @DisplayName("validate")
-    class ValidateTest {
+    @DisplayName("validateOrderTime")
+    class ValidateOrderTimeTest {
         @Test
         @DisplayName("妥当な注文は合計金額付きで成功すること")
         void shouldReturnValidOrder() {
+            // Arrange
             mockNow(TIME_1005);
             var request = createSampleOrderRequest("田中花子", TIME_1000,
                     "1:りんご:2:500", "2:みかん:1:300");
-            when(productRepository.findByName("りんご")).thenReturn(Optional.of(new Product(1L, "りんご")));
-            when(productRepository.findByName("みかん")).thenReturn(Optional.of(new Product(2L, "みかん")));
 
-            var result = sut.validate(request);
+            // Act
+            var result = sut.validateOrderTime(request);
 
-            assertThat(result).isEqualTo(new Success<>(new OrderService.ValidOrder(
-                    "田中花子", TIME_1000,
-                    List.of(
-                            new OrderService.ValidOrderDetail(1, new Product(1L, "りんご"), 2, 500),
-                            new OrderService.ValidOrderDetail(2, new Product(2L, "みかん"), 1, 300)),
-                    1300)));
+            // Assert
+            assertThat(result).isEqualTo(new Success<>(request));
         }
 
         @Test
@@ -141,12 +137,12 @@ class OrderServiceTest {
             var request = createSampleOrderRequest("田中花子", TIME_1010, "1:りんご:1:500");
 
             // Act
-            var result = sut.validate(request);
+            var result = sut.validateOrderTime(request);
 
             // Assert
             assertThat(result).isInstanceOf(Failure.class);
             switch (result) {
-                case Failure<OrderService.ValidOrder>(var errors) ->
+                case Failure<OrderRequest>(var errors) ->
                     assertThat(errors).containsExactly("注文日時が不正です");
                 default -> fail();
             }
@@ -163,7 +159,7 @@ class OrderServiceTest {
             var requestDetail = new OrderRequestDetail(1, "りんご", 2, 500);
             when(productRepository.findByName("りんご")).thenReturn(Optional.of(product));
 
-            var result = sut.validateDetail(requestDetail);
+            var result = sut.validateDetailProductName(requestDetail);
 
             assertThat(result).isEqualTo(new Success<>(
                     new OrderService.ValidOrderDetail(1, product, 2, 500)));
@@ -177,7 +173,7 @@ class OrderServiceTest {
             when(productRepository.findByName("存在しない商品")).thenReturn(Optional.empty());
 
             // Act
-            var result = sut.validateDetail(requestDetail);
+            var result = sut.validateDetailProductName(requestDetail);
 
             // Assert
             assertThat(result).isInstanceOf(Failure.class);
