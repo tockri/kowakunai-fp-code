@@ -13,11 +13,8 @@ import dev.tockri.kowakunai.order.db.OrderRepository;
 import dev.tockri.kowakunai.order.db.Product;
 import dev.tockri.kowakunai.order.db.ProductRepository;
 import dev.tockri.kowakunai.order.db.StockRepository;
-import dev.tockri.kowakunai.order.dto.OrderFailureResponse;
 import dev.tockri.kowakunai.order.dto.OrderRequest;
 import dev.tockri.kowakunai.order.dto.OrderRequestDetail;
-import dev.tockri.kowakunai.order.dto.OrderResponse;
-import dev.tockri.kowakunai.order.dto.OrderSuccessResponse;
 import dev.tockri.kowakunai.util.Failure;
 import dev.tockri.kowakunai.util.Result;
 import dev.tockri.kowakunai.util.Success;
@@ -38,17 +35,11 @@ public class OrderService {
     record ValidOrderDetail(int index, Product product, int quantity, int unitPrice) {
     }
 
-    public OrderResponse placeOrder(@Validated OrderRequest request) {
-        var result = validate(request)
+    public Result<Order> placeOrder(@Validated OrderRequest request) {
+        return validate(request)
                 .then(this::checkStock)
                 .then(this::saveOrder)
                 .then(this::sendEmail);
-
-        return switch (result) {
-            case Success<Order>(var order) -> new OrderSuccessResponse(order.id(),
-                    order.customerName(), order.orderTime(), order.totalAmount());
-            case Failure<Order>(var errors) -> new OrderFailureResponse(errors);
-        };
     }
 
     // 注文全体のバリデーションを行う

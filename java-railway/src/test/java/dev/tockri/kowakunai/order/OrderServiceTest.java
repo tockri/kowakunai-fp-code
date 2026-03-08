@@ -31,10 +31,8 @@ import dev.tockri.kowakunai.order.db.Product;
 import dev.tockri.kowakunai.order.db.ProductRepository;
 import dev.tockri.kowakunai.order.db.Stock;
 import dev.tockri.kowakunai.order.db.StockRepository;
-import dev.tockri.kowakunai.order.dto.OrderFailureResponse;
 import dev.tockri.kowakunai.order.dto.OrderRequest;
 import dev.tockri.kowakunai.order.dto.OrderRequestDetail;
-import dev.tockri.kowakunai.order.dto.OrderSuccessResponse;
 import dev.tockri.kowakunai.util.Failure;
 import dev.tockri.kowakunai.util.Success;
 
@@ -85,8 +83,13 @@ class OrderServiceTest {
                             List.of(new OrderDetail(1L, "りんご", 2, 500))));
 
             var result = sut.placeOrder(request);
-
-            assertThat(result).isEqualTo(new OrderSuccessResponse(10L, "田中花子", TIME_1000, 1000));
+            assertThat(result).isInstanceOf(Success.class);
+            switch (result) {
+                case Success<Order>(var order) ->
+                    assertThat(order).isEqualTo(new Order(10L, "田中花子", TIME_1000, 1000,
+                            List.of(new OrderDetail(1L, "りんご", 2, 500))));
+                default -> fail();
+            }
         }
 
         @Test
@@ -97,7 +100,12 @@ class OrderServiceTest {
 
             var result = sut.placeOrder(request);
 
-            assertThat(result).isEqualTo(new OrderFailureResponse(List.of("注文日時が不正です")));
+            assertThat(result).isInstanceOf(Failure.class);
+            switch (result) {
+                case Failure<Order>(var errors) ->
+                    assertThat(errors).containsExactly("注文日時が不正です");
+                default -> fail();
+            }
             verify(orderRepository, org.mockito.Mockito.never()).save(any(Order.class));
         }
 
@@ -138,8 +146,8 @@ class OrderServiceTest {
             // Assert
             assertThat(result).isInstanceOf(Failure.class);
             switch (result) {
-                case Failure<OrderService.ValidOrder>(var errors) -> assertThat(errors)
-                        .containsExactly("注文日時が不正です");
+                case Failure<OrderService.ValidOrder>(var errors) ->
+                    assertThat(errors).containsExactly("注文日時が不正です");
                 default -> fail();
             }
         }
@@ -174,8 +182,8 @@ class OrderServiceTest {
             // Assert
             assertThat(result).isInstanceOf(Failure.class);
             switch (result) {
-                case Failure<OrderService.ValidOrderDetail>(var errors) -> assertThat(errors)
-                        .containsExactly("注文詳細[1]の商品名が不正です");
+                case Failure<OrderService.ValidOrderDetail>(var errors) ->
+                    assertThat(errors).containsExactly("注文詳細[1]の商品名が不正です");
                 default -> fail();
             }
         }
@@ -211,8 +219,8 @@ class OrderServiceTest {
             // Assert
             assertThat(result).isInstanceOf(Failure.class);
             switch (result) {
-                case Failure<OrderService.ValidOrder>(var errors) -> assertThat(errors)
-                        .containsExactly("注文詳細[1]の商品\u300cりんご\u300dの在庫が不足しています");
+                case Failure<OrderService.ValidOrder>(var errors) ->
+                    assertThat(errors).containsExactly("注文詳細[1]の商品\u300cりんご\u300dの在庫が不足しています");
                 default -> fail();
             }
         }
