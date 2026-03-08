@@ -17,7 +17,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.platform.commons.annotation.Testable;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.InjectMocks;
@@ -37,7 +36,6 @@ import dev.tockri.kowakunai.util.Failure;
 import dev.tockri.kowakunai.util.Success;
 
 @ExtendWith(MockitoExtension.class)
-@Testable
 class OrderServiceTest {
 
     @Mock
@@ -71,7 +69,7 @@ class OrderServiceTest {
     @DisplayName("placeOrder")
     class PlaceOrderTest {
         @Test
-        @DisplayName("注文が成功した場合、成功レスポンスを返すこと")
+        @DisplayName("注文が成功した場合、成功レスポンスを返す")
         void shouldReturnSuccessResponse() {
             mockNow(TIME_1005);
             var request = createSampleOrderRequest("田中花子", TIME_1000, "1:りんご:2:500");
@@ -93,7 +91,7 @@ class OrderServiceTest {
         }
 
         @Test
-        @DisplayName("注文の検証に失敗した場合、失敗レスポンスを返し保存しないこと")
+        @DisplayName("注文の検証に失敗した場合、失敗レスポンスを返し保存しない")
         void shouldReturnFailureResponseWhenValidationFails() {
             mockNow(TIME_1000);
             var request = createSampleOrderRequest("田中花子", TIME_1010, "1:りんご:2:500");
@@ -115,7 +113,7 @@ class OrderServiceTest {
     @DisplayName("validateOrderTime")
     class ValidateOrderTimeTest {
         @Test
-        @DisplayName("妥当な注文は合計金額付きで成功すること")
+        @DisplayName("日付が妥当であれば成功して、引数で渡したオブジェクトを返す")
         void shouldReturnValidOrder() {
             // Arrange
             mockNow(TIME_1005);
@@ -130,17 +128,17 @@ class OrderServiceTest {
         }
 
         @Test
-        @DisplayName("将来の日付の注文はエラーになること")
+        @DisplayName("将来の日付の場合、失敗を返す")
         void shouldFailOnFutureOrderDate() {
             mockNow(TIME_1000);
             // Arrange
-            var request = createSampleOrderRequest("田中花子", TIME_1010, "1:りんご:1:500");
+            var request = createSampleOrderRequest("田中花子", TIME_1010,
+                    "1:りんご:1:500");
 
             // Act
             var result = sut.validateOrderTime(request);
 
             // Assert
-            assertThat(result).isInstanceOf(Failure.class);
             switch (result) {
                 case Failure<OrderRequest>(var errors) ->
                     assertThat(errors).containsExactly("注文日時が不正です");
@@ -153,20 +151,24 @@ class OrderServiceTest {
     @DisplayName("validateDetail")
     class ValidateDetailTest {
         @Test
-        @DisplayName("存在する商品が指定された場合、成功すること")
+        @DisplayName("存在する商品が指定された場合、成功してValidOrderDetailを返す")
         void shouldSucceedOnExistingProduct() {
-            var product = new Product(1L, "りんご");
             var requestDetail = new OrderRequestDetail(1, "りんご", 2, 500);
-            when(productRepository.findByName("りんご")).thenReturn(Optional.of(product));
+            when(productRepository.findByName("りんご")).thenReturn(Optional.of(new Product(1L, "りんご")));
 
             var result = sut.validateDetailProductName(requestDetail);
 
-            assertThat(result).isEqualTo(new Success<>(
-                    new OrderService.ValidOrderDetail(1, product, 2, 500)));
+            switch (result) {
+                case Success<OrderService.ValidOrderDetail>(var validDetail) -> {
+                    assertThat(validDetail).isEqualTo(
+                            new OrderService.ValidOrderDetail(1, new Product(1L, "りんご"), 2, 500));
+                }
+                default -> fail();
+            }
         }
 
         @Test
-        @DisplayName("存在しない商品が指定された場合、エラーになること")
+        @DisplayName("存在しない商品が指定された場合、失敗してエラーを返す")
         void shouldFailOnNonExistingProduct() {
             // Arrange
             var requestDetail = new OrderRequestDetail(1, "存在しない商品", 1, 500);
@@ -176,7 +178,6 @@ class OrderServiceTest {
             var result = sut.validateDetailProductName(requestDetail);
 
             // Assert
-            assertThat(result).isInstanceOf(Failure.class);
             switch (result) {
                 case Failure<OrderService.ValidOrderDetail>(var errors) ->
                     assertThat(errors).containsExactly("注文詳細[1]の商品名が不正です");
@@ -213,7 +214,6 @@ class OrderServiceTest {
             var result = sut.checkStock(validOrder);
 
             // Assert
-            assertThat(result).isInstanceOf(Failure.class);
             switch (result) {
                 case Failure<OrderService.ValidOrder>(var errors) ->
                     assertThat(errors).containsExactly("注文詳細[1]の商品\u300cりんご\u300dの在庫が不足しています");
