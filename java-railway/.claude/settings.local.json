@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(./gradlew compileJava)",
+      "Bash(./gradlew test --tests \"dev.tockri.kowakunai.order.OrderRepositoryTest\")",
+      "Bash(./gradlew dependencies --configuration testCompileClasspath)",
+      "Bash(xargs -I{} jar tf \"{}\")",
+      "Bash(./gradlew test --tests \"dev.tockri.kowakunai.order.OrderRepositoryTest.注文を明細付きで保存できる\" --info)",
+      "Bash(./gradlew test --tests \"dev.tockri.kowakunai.order.OrderRepositoryTest.注文を明細付きで保存できる\" --stacktrace)",
+      "Bash(./gradlew test --tests \"dev.tockri.kowakunai.order.OrderRepositoryTest.注文を明細付きで保存できる\")",
+      "Bash(./gradlew dependencies --configuration compileClasspath)"
+    ]
+  }
+}
