@@ -33,7 +33,7 @@ class OrderServiceTest {
 
   @Mock StockRepository stockRepository;
 
-  @InjectMocks OrderService sut;
+  @Spy @InjectMocks OrderService sut;
 
   @Captor ArgumentCaptor<Order> orderCaptor;
 
@@ -52,7 +52,7 @@ class OrderServiceTest {
   @DisplayName("placeOrder")
   class PlaceOrderTest {
     @Test
-    @DisplayName("product検索、stock検索、order保存を順番に行う")
+    @DisplayName("各メソッドを順番に呼ぶ")
     void shouldReturnSuccessResponse() {
       // Arrange
       mockNow(TIME_1005);
@@ -66,11 +66,13 @@ class OrderServiceTest {
       sut.placeOrder(request);
 
       // Assert
-      // I/Oが順番に呼ばれているだけ確認する
-      var inOrder = Mockito.inOrder(productRepository, stockRepository, orderRepository);
-      inOrder.verify(productRepository).findByName("りんご");
-      inOrder.verify(stockRepository).findByProductId(1L);
-      inOrder.verify(orderRepository).save(any(Order.class));
+      // 順番に呼ばれているだけ確認する
+      var inOrder = Mockito.inOrder(sut);
+      inOrder.verify(sut).validateOrderTime(any());
+      inOrder.verify(sut).validateProductName(any());
+      inOrder.verify(sut).checkStock(any());
+      inOrder.verify(sut).saveOrder(any());
+      inOrder.verify(sut).sendEmail(any());
     }
   }
 
