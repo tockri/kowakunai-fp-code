@@ -88,7 +88,7 @@ public class OrderService {
   }
 
   // 明細一つぶんの在庫をチェックする
-  private Result<ValidOrderDetail> checkDetailStock(ValidOrderDetail d) {
+  Result<ValidOrderDetail> checkDetailStock(ValidOrderDetail d) {
     var stock = stockRepository.findByProductId(d.product().id());
     if (stock.isEmpty() || stock.get().quantity() < d.quantity()) {
       return new Failure<>(
@@ -108,7 +108,7 @@ public class OrderService {
   }
 
   // DBに保存するためのOrderオブジェクトを構築する
-  Order buildOrder(ValidOrder order) {
+  private Order buildOrder(ValidOrder order) {
     var details =
         order.details().stream()
             .map(d -> new OrderDetail(null, d.product().name(), d.quantity(), d.unitPrice()))
