@@ -5,24 +5,24 @@ import java.util.List;
 import java.util.function.Function;
 
 public sealed interface Result<T> permits Success, Failure {
-    default <S> Result<S> then(Function<T, Result<S>> func) {
-        return switch (this) {
-            case Success<T>(var value) -> func.apply(value);
-            case Failure<T>(var errors) -> new Failure<>(errors);
-        };
+  default <S> Result<S> then(Function<T, Result<S>> func) {
+    return switch (this) {
+      case Success<T>(var value) -> func.apply(value);
+      case Failure<T>(var errors) -> new Failure<>(errors);
+    };
+  }
+
+  static <S, T> Result<List<T>> collect(Iterable<S> items, Function<S, Result<T>> func) {
+    var results = new ArrayList<T>();
+    var errors = new ArrayList<String>();
+
+    for (var item : items) {
+      switch (func.apply(item)) {
+        case Success<T>(var value) -> results.add(value);
+        case Failure<T>(var es) -> errors.addAll(es);
+      }
     }
 
-    static <S, T> Result<List<T>> collect(Iterable<S> items, Function<S, Result<T>> func) {
-        var results = new ArrayList<T>();
-        var errors = new ArrayList<String>();
-
-        for (var item : items) {
-            switch (func.apply(item)) {
-                case Success<T>(var value) -> results.add(value);
-                case Failure<T>(var es) -> errors.addAll(es);
-            }
-        }
-
-        return errors.isEmpty() ? new Success<>(results) : new Failure<>(errors);
-    }
+    return errors.isEmpty() ? new Success<>(results) : new Failure<>(errors);
+  }
 }
