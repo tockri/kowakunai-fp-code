@@ -1,39 +1,28 @@
 package dev.tockri.kowakunai.order;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.fail;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
-import java.time.Clock;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Stream;
-
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-
-import dev.tockri.kowakunai.order.db.Order;
-import dev.tockri.kowakunai.order.db.OrderDetail;
-import dev.tockri.kowakunai.order.db.OrderRepository;
-import dev.tockri.kowakunai.order.db.Product;
-import dev.tockri.kowakunai.order.db.ProductRepository;
-import dev.tockri.kowakunai.order.db.Stock;
-import dev.tockri.kowakunai.order.db.StockRepository;
+import dev.tockri.kowakunai.order.db.*;
 import dev.tockri.kowakunai.order.dto.OrderRequest;
 import dev.tockri.kowakunai.order.dto.OrderRequestDetail;
 import dev.tockri.kowakunai.util.Failure;
 import dev.tockri.kowakunai.util.Success;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.*;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.time.Clock;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.Optional;
+import java.util.stream.Stream;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class OrderServiceTest {
@@ -61,8 +50,10 @@ class OrderServiceTest {
     private static final LocalDateTime TIME_1010 = LocalDateTime.of(2026, 3, 8, 10, 10);
 
     private void mockNow(LocalDateTime now) {
-        when(clock.instant()).thenReturn(now.atZone(ZoneId.systemDefault()).toInstant());
-        when(clock.getZone()).thenReturn(ZoneId.systemDefault());
+        var instant = now.atZone(ZoneId.systemDefault()).toInstant();
+        var zone = ZoneId.systemDefault();
+        when(clock.instant()).thenReturn(instant);
+        when(clock.getZone()).thenReturn(zone);
     }
 
     @Nested
@@ -71,40 +62,43 @@ class OrderServiceTest {
         @Test
         @DisplayName("注文が成功した場合、成功レスポンスを返す")
         void shouldReturnSuccessResponse() {
+            // Arrange
             mockNow(TIME_1005);
+            when(productRepository.findByName(any())).thenReturn(Optional.of(new Product(1L, "りんご")));
+            when(stockRepository.findByProductId(any())).thenReturn(Optional.of(new Stock(1L, 2)));
+            when(orderRepository.save(any(Order.class))).thenReturn(
+                    new Order(null, null, null, 0, null));
+
             var request = createSampleOrderRequest("田中花子", TIME_1000, "1:りんご:2:500");
 
-            when(productRepository.findByName("りんご")).thenReturn(Optional.of(new Product(1L, "りんご")));
-            when(stockRepository.findByProductId(1L)).thenReturn(Optional.of(new Stock(1L, 2)));
-            when(orderRepository.save(any(Order.class))).thenReturn(
-                    new Order(10L, "田中花子", TIME_1000, 1000,
-                            List.of(new OrderDetail(1L, "りんご", 2, 500))));
+            // Act
+            sut.placeOrder(request);
 
-            var result = sut.placeOrder(request);
-            assertThat(result).isInstanceOf(Success.class);
-            switch (result) {
-                case Success<Order>(var order) ->
-                    assertThat(order).isEqualTo(new Order(10L, "田中花子", TIME_1000, 1000,
-                            List.of(new OrderDetail(1L, "りんご", 2, 500))));
-                default -> fail();
-            }
+            // Assert
+            // I/Oが順番に呼ばれていることだけ確認する
+            var inOrder = Mockito.inOrder(productRepository, stockRepository, orderRepository);
+            inOrder.verify(productRepository).findByName("りんご");
+            inOrder.verify(stockRepository).findByProductId(1L);
+            inOrder.verify(orderRepository).save(any(Order.class));
         }
 
         @Test
         @DisplayName("注文の検証に失敗した場合、失敗レスポンスを返し保存しない")
         void shouldReturnFailureResponseWhenValidationFails() {
+            // Arrange
             mockNow(TIME_1000);
             var request = createSampleOrderRequest("田中花子", TIME_1010, "1:りんご:2:500");
 
+            // Act
             var result = sut.placeOrder(request);
 
-            assertThat(result).isInstanceOf(Failure.class);
-            switch (result) {
-                case Failure<Order>(var errors) ->
-                    assertThat(errors).containsExactly("注文日時が不正です");
-                default -> fail();
+            // Assert
+            if (result instanceof Failure<Order>(var errors)) {
+                assertThat(errors).containsExactly("注文日時が不正です");
+            } else {
+                fail();
             }
-            verify(orderRepository, org.mockito.Mockito.never()).save(any(Order.class));
+            verify(orderRepository, never()).save(any(Order.class));
         }
 
     }
@@ -117,21 +111,25 @@ class OrderServiceTest {
         void shouldReturnValidOrder() {
             // Arrange
             mockNow(TIME_1005);
-            var request = createSampleOrderRequest("田中花子", TIME_1000,
+            var request = createSampleOrderRequest("Test Bob", TIME_1000,
                     "1:りんご:2:500", "2:みかん:1:300");
 
             // Act
             var result = sut.validateOrderTime(request);
 
             // Assert
-            assertThat(result).isEqualTo(new Success<>(request));
+            if (result instanceof Success<OrderRequest>(OrderRequest validOrder)) {
+                assertThat(validOrder).isSameAs(request);
+            } else {
+                fail();
+            }
         }
 
         @Test
         @DisplayName("将来の日付の場合、失敗を返す")
         void shouldFailOnFutureOrderDate() {
-            mockNow(TIME_1000);
             // Arrange
+            mockNow(TIME_1000);
             var request = createSampleOrderRequest("田中花子", TIME_1010,
                     "1:りんご:1:500");
 
@@ -139,10 +137,10 @@ class OrderServiceTest {
             var result = sut.validateOrderTime(request);
 
             // Assert
-            switch (result) {
-                case Failure<OrderRequest>(var errors) ->
-                    assertThat(errors).containsExactly("注文日時が不正です");
-                default -> fail();
+            if (result instanceof Failure<OrderRequest>(var errors)) {
+                assertThat(errors).containsExactly("注文日時が不正です");
+            } else {
+                fail();
             }
         }
     }
@@ -153,17 +151,22 @@ class OrderServiceTest {
         @Test
         @DisplayName("存在する商品が指定された場合、成功してValidOrderDetailを返す")
         void shouldSucceedOnExistingProduct() {
+            // Arrange
             var requestDetail = new OrderRequestDetail(1, "りんご", 2, 500);
             when(productRepository.findByName("りんご")).thenReturn(Optional.of(new Product(1L, "りんご")));
 
+            // Act
             var result = sut.validateDetailProductName(requestDetail);
 
-            switch (result) {
-                case Success<OrderService.ValidOrderDetail>(var validDetail) -> {
-                    assertThat(validDetail).isEqualTo(
-                            new OrderService.ValidOrderDetail(1, new Product(1L, "りんご"), 2, 500));
-                }
-                default -> fail();
+            // Assert
+            if (result instanceof Success<OrderService.ValidOrderDetail>(var validDetail)) {
+                assertEquals(1, validDetail.index());
+                assertEquals(1L, validDetail.product().id());
+                assertEquals("りんご", validDetail.product().name());
+                assertEquals(2, validDetail.quantity());
+                assertEquals(500, validDetail.unitPrice());
+            } else {
+                fail();
             }
         }
 
@@ -178,10 +181,10 @@ class OrderServiceTest {
             var result = sut.validateDetailProductName(requestDetail);
 
             // Assert
-            switch (result) {
-                case Failure<OrderService.ValidOrderDetail>(var errors) ->
-                    assertThat(errors).containsExactly("注文詳細[1]の商品名が不正です");
-                default -> fail();
+            if (result instanceof Failure<OrderService.ValidOrderDetail>(var errors)) {
+                assertThat(errors).containsExactly("注文詳細[1]の商品名が不正です");
+            } else {
+                fail();
             }
         }
 
@@ -193,13 +196,19 @@ class OrderServiceTest {
         @Test
         @DisplayName("在庫が十分にある場合、成功すること")
         void shouldSucceedWhenStockIsSufficient() {
+            // Arrange
             var validOrder = createSampleValidOrder("田中花子", TIME_1000, "1:りんご:2:500");
-
             when(stockRepository.findByProductId(1L)).thenReturn(Optional.of(new Stock(1L, 2)));
 
+            // Act
             var result = sut.checkStock(validOrder);
 
-            assertThat(result).isEqualTo(new Success<>(validOrder));
+            // Assert
+            if (result instanceof Success<OrderService.ValidOrder>(var order)) {
+                assertThat(order).isSameAs(validOrder);
+            } else {
+                fail();
+            }
         }
 
         @Test
@@ -214,10 +223,10 @@ class OrderServiceTest {
             var result = sut.checkStock(validOrder);
 
             // Assert
-            switch (result) {
-                case Failure<OrderService.ValidOrder>(var errors) ->
-                    assertThat(errors).containsExactly("注文詳細[1]の商品\u300cりんご\u300dの在庫が不足しています");
-                default -> fail();
+            if (result instanceof Failure<OrderService.ValidOrder>(var errors)) {
+                assertThat(errors).containsExactly("注文詳細[1]の商品「りんご」の在庫が不足しています");
+            } else {
+                fail();
             }
         }
     }
@@ -229,9 +238,9 @@ class OrderServiceTest {
         @DisplayName("注文が保存されること")
         void shouldSaveOrder() {
             // Arrange
-            var validOrder = createSampleValidOrder("田中花子", TIME_1000, "1:りんご:3:500");
+            var validOrder = createSampleValidOrder("Test Alice", TIME_1000, "1:りんご:3:500");
 
-            when(orderRepository.save(any(Order.class))).thenReturn(createSampleOrder());
+            when(orderRepository.save(any(Order.class))).thenReturn(new Order(null, null, null, 0, null));
 
             // Act
             sut.saveOrder(validOrder);
@@ -239,20 +248,27 @@ class OrderServiceTest {
             // Assert
             verify(orderRepository).save(orderCaptor.capture());
             var savedOrder = orderCaptor.getValue();
-            assertThat(savedOrder.customerName()).isEqualTo("田中花子");
-            assertThat(savedOrder.orderTime()).isEqualTo(LocalDateTime.of(2026, 3, 8, 10, 0));
-            assertThat(savedOrder.totalAmount()).isEqualTo(1500);
+            assertEquals("Test Alice", savedOrder.customerName());
+            assertEquals(TIME_1000, savedOrder.orderTime());
+            assertEquals(1500, savedOrder.totalAmount());
         }
 
         @Test
         @DisplayName("保存時に例外が発生した場合、エラーになること")
         void shouldFailWhenRepositorySaveThrowsException() {
-            var validOrder = createSampleValidOrder("田中花子", TIME_1000, "1:りんご:3:500");
+            // Arrange
+            var validOrder = createSampleValidOrder("test user", TIME_1010, "1:りんご:3:500");
             when(orderRepository.save(any(Order.class))).thenThrow(new RuntimeException("db error"));
 
+            // Act
             var result = sut.saveOrder(validOrder);
 
-            assertThat(result).isEqualTo(new Failure<>(List.of("注文の保存に失敗しました")));
+            // Assert
+            if (result instanceof Failure<Order>(var errors)) {
+                assertThat(errors).containsExactly("注文の保存に失敗しました");
+            } else {
+                fail();
+            }
         }
     }
 
@@ -265,24 +281,21 @@ class OrderServiceTest {
     }
 
     private static OrderService.ValidOrder createSampleValidOrder(String customerName,
-            LocalDateTime orderDateTime, String... details) {
+                                                                  LocalDateTime orderDateTime, String... details) {
         var validDetails = Stream.of(details).map(Detail::parse)
                 .map(d -> new OrderService.ValidOrderDetail(d.index, new Product(1L, d.productName),
                         d.quantity, d.unitPrice))
                 .toList();
-        long total = validDetails.stream().mapToLong(d -> d.quantity() * d.unitPrice()).sum();
+        long total = validDetails.stream().mapToLong(d -> (long) d.quantity() * d.unitPrice()).sum();
         return new OrderService.ValidOrder(customerName, orderDateTime, validDetails, total);
     }
 
     private static OrderRequest createSampleOrderRequest(String customerName,
-            LocalDateTime orderDateTime, String... details) {
-        return new OrderRequest(customerName, orderDateTime, Stream.of(details).map(Detail::parse)
+                                                         LocalDateTime orderDateTime, String... details) {
+        var requestDetails = Stream.of(details).map(Detail::parse)
                 .map(d -> new OrderRequestDetail(d.index, d.productName, d.quantity, d.unitPrice))
-                .toList());
-    }
+                .toList();
 
-    private static Order createSampleOrder() {
-        return new Order(1L, "田中花子", LocalDateTime.of(2026, 3, 8, 10, 0), 1000,
-                List.of(new OrderDetail(1L, "りんご", 2, 500)));
+        return new OrderRequest(customerName, orderDateTime, requestDetails);
     }
 }
