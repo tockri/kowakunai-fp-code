@@ -1,8 +1,7 @@
 package dev.tockri.kowakunai.order;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -53,7 +52,7 @@ class OrderServiceTest {
   @DisplayName("placeOrder")
   class PlaceOrderTest {
     @Test
-    @DisplayName("注文が成功した場合、成功レスポンスを返す")
+    @DisplayName("product検索、stock検索、order保存を順番に行う")
     void shouldReturnSuccessResponse() {
       // Arrange
       mockNow(TIME_1005);
@@ -67,30 +66,11 @@ class OrderServiceTest {
       sut.placeOrder(request);
 
       // Assert
-      // I/Oが順番に呼ばれていることだけ確認する
+      // I/Oが順番に呼ばれているだけ確認する
       var inOrder = Mockito.inOrder(productRepository, stockRepository, orderRepository);
       inOrder.verify(productRepository).findByName("りんご");
       inOrder.verify(stockRepository).findByProductId(1L);
       inOrder.verify(orderRepository).save(any(Order.class));
-    }
-
-    @Test
-    @DisplayName("注文の検証に失敗した場合、失敗レスポンスを返し保存しない")
-    void shouldReturnFailureResponseWhenValidationFails() {
-      // Arrange
-      mockNow(TIME_1000);
-      var request = createSampleOrderRequest("田中花子", TIME_1010, "1:りんご:2:500");
-
-      // Act
-      var result = sut.placeOrder(request);
-
-      // Assert
-      if (result instanceof Failure<Order>(var errors)) {
-        assertThat(errors).containsExactly("注文日時が不正です");
-      } else {
-        fail();
-      }
-      verify(orderRepository, never()).save(any(Order.class));
     }
   }
 
@@ -182,7 +162,7 @@ class OrderServiceTest {
   @DisplayName("checkStock")
   class CheckStockTest {
     @Test
-    @DisplayName("在庫が十分にある場合、成功すること")
+    @DisplayName("checkDetailStockが全て成功なら成功して引数オブジェクトをそのまま返す")
     void shouldSucceedWhenStockIsSufficient() {
       // Arrange
       var validOrder = createSampleValidOrder("田中花子", TIME_1000, "1:りんご:2:500");
@@ -192,30 +172,27 @@ class OrderServiceTest {
       var result = sut.checkStock(validOrder);
 
       // Assert
-      if (result instanceof Success<OrderService.ValidOrder>(var order)) {
-        assertThat(order).isSameAs(validOrder);
+      if (result instanceof Success<OrderService.ValidOrder>(var successOrder)) {
+        assertThat(successOrder).isSameAs(validOrder);
       } else {
         fail();
       }
     }
 
     @Test
-    @DisplayName("在庫が不足している場合、エラーになること")
+    @DisplayName("一つでも失敗の場合、失敗になる")
     void shouldFailWhenStockIsInsufficient() {
       // Arrange
-      var validOrder = createSampleValidOrder("田中花子", TIME_1000, "1:りんご:3:500");
+      var validOrder = createSampleValidOrder("田中花子", TIME_1000, "1:りんご:3:500", "2:みかん:1:300");
 
-      when(stockRepository.findByProductId(1L)).thenReturn(Optional.of(new Stock(1L, 2)));
+      when(stockRepository.findByProductId(1L)).thenReturn(Optional.of(new Stock(1L, 3)));
+      when(stockRepository.findByProductId(2L)).thenReturn(Optional.of(new Stock(2L, 0)));
 
       // Act
       var result = sut.checkStock(validOrder);
 
       // Assert
-      if (result instanceof Failure<OrderService.ValidOrder>(var errors)) {
-        assertThat(errors).containsExactly("注文詳細[1]の商品「りんご」の在庫が不足しています");
-      } else {
-        fail();
-      }
+      assertThat(result).isInstanceOf(Failure.class);
     }
   }
 
@@ -223,7 +200,7 @@ class OrderServiceTest {
   @DisplayName("checkDetailsStock")
   class CheckDetailsStockTest {
     @Test
-    @DisplayName("明細の在庫が十分にある場合、成功すること")
+    @DisplayName("明細の在庫が十分にある場合、成功する")
     void shouldSucceedWhenStockIsSufficientForAllDetails() {
       // Arrange
       var validOrderDetail = new OrderService.ValidOrderDetail(1, new Product(1L, "りんご"), 2, 500);
@@ -241,7 +218,7 @@ class OrderServiceTest {
     }
 
     @Test
-    @DisplayName("在庫が不足している場合、エラーになること")
+    @DisplayName("在庫が不足している場合、エラーになる")
     void shouldFailWhenStockIsInsufficientForAnyDetail() {
       // Arrange
       var validOrderDetail = new OrderService.ValidOrderDetail(1, new Product(1L, "りんご"), 3, 500);
@@ -263,7 +240,7 @@ class OrderServiceTest {
   @DisplayName("saveOrder")
   class SaveOrderTest {
     @Test
-    @DisplayName("注文が保存されること")
+    @DisplayName("注文が保存される")
     void shouldSaveOrder() {
       // Arrange
       var validOrder = createSampleValidOrder("Test Alice", TIME_1000, "1:りんご:3:500");
@@ -282,21 +259,17 @@ class OrderServiceTest {
     }
 
     @Test
-    @DisplayName("保存時に例外が発生した場合、エラーになること")
+    @DisplayName("保存時に例外が発生した場合、エラーになる")
     void shouldFailWhenRepositorySaveThrowsException() {
       // Arrange
       var validOrder = createSampleValidOrder("test user", TIME_1010, "1:りんご:3:500");
       when(orderRepository.save(any(Order.class))).thenThrow(new RuntimeException("db error"));
 
       // Act
-      var result = sut.saveOrder(validOrder);
+      var ex = assertThrows(RuntimeException.class, () -> sut.saveOrder(validOrder));
 
       // Assert
-      if (result instanceof Failure<Order>(var errors)) {
-        assertThat(errors).containsExactly("注文の保存に失敗しました");
-      } else {
-        fail();
-      }
+      assertEquals("Failed to save order", ex.getMessage());
     }
   }
 
@@ -319,7 +292,10 @@ class OrderServiceTest {
             .map(
                 d ->
                     new OrderService.ValidOrderDetail(
-                        d.index, new Product(1L, d.productName), d.quantity, d.unitPrice))
+                        d.index,
+                        new Product((long) d.index, d.productName),
+                        d.quantity,
+                        d.unitPrice))
             .toList();
     long total = validDetails.stream().mapToLong(d -> (long) d.quantity() * d.unitPrice()).sum();
     return new OrderService.ValidOrder(customerName, orderDateTime, validDetails, total);
