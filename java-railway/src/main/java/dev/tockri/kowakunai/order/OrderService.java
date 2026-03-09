@@ -103,7 +103,7 @@ public class OrderService {
       var saved = orderRepository.save(buildOrder(order));
       return new Success<>(saved);
     } catch (Exception e) {
-      return new Failure<>(List.of("注文の保存に失敗しました"));
+      throw new RuntimeException("Failed to save order", e);
     }
   }
 
