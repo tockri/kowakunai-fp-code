@@ -220,6 +220,46 @@ class OrderServiceTest {
   }
 
   @Nested
+  @DisplayName("checkDetailsStock")
+  class CheckDetailsStockTest {
+    @Test
+    @DisplayName("明細の在庫が十分にある場合、成功すること")
+    void shouldSucceedWhenStockIsSufficientForAllDetails() {
+      // Arrange
+      var validOrderDetail = new OrderService.ValidOrderDetail(1, new Product(1L, "りんご"), 2, 500);
+      when(stockRepository.findByProductId(1L)).thenReturn(Optional.of(new Stock(1L, 2)));
+
+      // Act
+      var result = sut.checkDetailStock(validOrderDetail);
+
+      // Assert
+      if (result instanceof Success<OrderService.ValidOrderDetail>(var successDetail)) {
+        assertThat(successDetail).isSameAs(validOrderDetail);
+      } else {
+        fail();
+      }
+    }
+
+    @Test
+    @DisplayName("在庫が不足している場合、エラーになること")
+    void shouldFailWhenStockIsInsufficientForAnyDetail() {
+      // Arrange
+      var validOrderDetail = new OrderService.ValidOrderDetail(1, new Product(1L, "りんご"), 3, 500);
+      when(stockRepository.findByProductId(1L)).thenReturn(Optional.of(new Stock(1L, 2)));
+
+      // Act
+      var result = sut.checkDetailStock(validOrderDetail);
+
+      // Assert
+      if (result instanceof Failure<OrderService.ValidOrderDetail>(var errors)) {
+        assertThat(errors).containsExactly("注文詳細[1]の商品「りんご」の在庫が不足しています");
+      } else {
+        fail();
+      }
+    }
+  }
+
+  @Nested
   @DisplayName("saveOrder")
   class SaveOrderTest {
     @Test
