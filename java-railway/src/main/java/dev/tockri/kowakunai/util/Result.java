@@ -8,7 +8,7 @@ public sealed interface Result<T> permits Success, Failure {
   default <S> Result<S> then(Function<T, Result<S>> func) {
     return switch (this) {
       case Success<T>(var value) -> func.apply(value);
-      case Failure<T>(var errors) -> new Failure<>(errors);
+      case Failure<T> failure -> failure.cast();
     };
   }
 
