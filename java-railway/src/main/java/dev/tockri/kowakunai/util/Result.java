@@ -12,6 +12,19 @@ public sealed interface Result<T> permits Success, Failure {
     };
   }
 
+  default <S> Result<S> map(Function<T, S> func) {
+    return switch (this) {
+      case Success<T>(var value) -> {
+        try {
+          yield new Success<>(func.apply(value));
+        } catch (Exception e) {
+          yield new Failure<>(List.of(e.getMessage()));
+        }
+      }
+      case Failure<T> failure -> failure.cast();
+    };
+  }
+
   static <S, T> Result<List<T>> collect(Iterable<S> items, Function<S, Result<T>> func) {
     var results = new ArrayList<T>();
     var errors = new ArrayList<String>();

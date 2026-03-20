@@ -50,13 +50,14 @@ public class OrderService {
     var detailsResult = Result.collect(request.details(), this::validateDetailProductName);
 
     return switch (detailsResult) {
-      case Success<List<ValidOrderDetail>>(var validDetails) ->
-          new Success<>(
-              new ValidOrder(
-                  request.customerName(),
-                  request.orderDateTime(),
-                  validDetails,
-                  calcTotalAmount(validDetails)));
+      case Success<List<ValidOrderDetail>> success ->
+          success.map(
+              validDetails ->
+                  new ValidOrder(
+                      request.customerName(),
+                      request.orderDateTime(),
+                      validDetails,
+                      calcTotalAmount(validDetails)));
 
       case Failure<List<ValidOrderDetail>> failure -> failure.cast();
     };
