@@ -116,11 +116,9 @@ public class OrderService {
 
   // メールを送信する
   Result<Order> sendEmail(Order order) {
-    try {
-      // ここではメール送信処理を省略
-      return new Success<>(order);
-    } catch (Exception e) {
-      return new Failure<>(List.of("注文は完了しましたが、注文完了メールの送信に失敗しました。注文履歴画面にてご確認ください。"));
-    }
+    //
+    // ここではメール送信処理を省略
+    //
+    return new Success<>(order);
   }
 }
