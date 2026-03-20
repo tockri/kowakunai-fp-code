@@ -99,12 +99,8 @@ public class OrderService {
 
   // 注文を保存する
   Result<Order> saveOrder(ValidOrder order) {
-    try {
-      var saved = orderRepository.save(buildOrder(order));
-      return new Success<>(saved);
-    } catch (Exception e) {
-      throw new RuntimeException("Failed to save order", e);
-    }
+    var saved = orderRepository.save(buildOrder(order));
+    return new Success<>(saved);
   }
 
   // DBに保存するためのOrderオブジェクトを構築する
