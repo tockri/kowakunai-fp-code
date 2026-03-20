@@ -36,9 +36,13 @@ public sealed interface Result<T> permits Success, Failure {
     var errors = new ArrayList<String>();
 
     for (var item : items) {
-      switch (func.apply(item)) {
-        case Success<T>(var value) -> results.add(value);
-        case Failure<T>(var es) -> errors.addAll(es);
+      try {
+        switch (func.apply(item)) {
+          case Success<T>(var value) -> results.add(value);
+          case Failure<T>(var es) -> errors.addAll(es);
+        }
+      } catch (Exception e) {
+        errors.add(e.getMessage());
       }
     }
 
