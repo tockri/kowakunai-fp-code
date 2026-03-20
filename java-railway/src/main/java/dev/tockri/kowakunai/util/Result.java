@@ -7,7 +7,13 @@ import java.util.function.Function;
 public sealed interface Result<T> permits Success, Failure {
   default <S> Result<S> then(Function<T, Result<S>> func) {
     return switch (this) {
-      case Success<T>(var value) -> func.apply(value);
+      case Success<T>(var value) -> {
+        try {
+          yield func.apply(value);
+        } catch (Exception e) {
+          yield new Failure<>(List.of(e.getMessage()));
+        }
+      }
       case Failure<T> failure -> failure.cast();
     };
   }
