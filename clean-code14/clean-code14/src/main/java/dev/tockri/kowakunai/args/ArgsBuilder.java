@@ -12,32 +12,56 @@ public class ArgsBuilder {
     var args = new ArgsImpl();
     var itr = new ArgvIterator(argv);
     while (itr.hasNext()) {
-      var arg = itr.next();
-
-      if (!arg.startsWith("-")) {
-        return new Failure<>(new ArgsError("Invalid argument: " + arg));
-      }
-
-      var key = arg.substring(1);
-      var argType = schema.get(key);
-      if (argType == null) {
-        return new Failure<>(new ArgsError("Unexpected key: " + key));
-      }
-
-      switch (argType) {
-        case BOOL -> args.setTrue(key);
-        case INT -> {
-          var valid = validateInt(itr.next());
-          if (valid instanceof Success<Integer, ArgsError>(var value)) {
-            args.setInt(key, value);
-          } else if (valid instanceof Failure<Integer, ArgsError> failure) {
-            return failure.cast();
-          }
-        }
-        case STRING -> args.setString(key, itr.next());
+      var setResult =
+          parseArg(schema, itr.next())
+              .flatMap(
+                  (argInfo) -> {
+                    var argType = argInfo.argType;
+                    var suppl = argType.needsValue ? itr.next() : null;
+                    return setValue(args, argInfo.key, argType, suppl);
+                  });
+      if (setResult instanceof Failure<Void, ArgsError> f) {
+        return f.cast();
       }
     }
     return new Success<>(args);
+  }
+
+  private record ArgInfo(String key, ArgType argType) {}
+
+  static Result<ArgInfo, ArgsError> parseArg(Schema schema, String arg) {
+    if (!arg.startsWith("-")) {
+      return new Failure<>(new ArgsError("Invalid argument: " + arg));
+    }
+
+    var key = arg.substring(1);
+    var argType = schema.get(key);
+    if (argType == null) {
+      return new Failure<>(new ArgsError("Unexpected key: " + key));
+    }
+    return new Success<>(new ArgInfo(key, argType));
+  }
+
+  static Result<Void, ArgsError> setValue(
+      ArgsImpl args, String key, ArgType argType, String suppl) {
+    switch (argType) {
+      case BOOL -> args.setTrue(key);
+      case INT -> {
+        var valid = validateInt(suppl);
+        if (valid instanceof Success<Integer, ArgsError>(var value)) {
+          args.setInt(key, value);
+        } else if (valid instanceof Failure<Integer, ArgsError> failure) {
+          return failure.cast();
+        }
+      }
+      case STRING -> {
+        if (suppl == null) {
+          return new Failure<>(new ArgsError("Supplied value is null"));
+        }
+        args.setString(key, suppl);
+      }
+    }
+    return new Success<>(null);
   }
 
   static Result<Integer, ArgsError> validateInt(String arg) {
