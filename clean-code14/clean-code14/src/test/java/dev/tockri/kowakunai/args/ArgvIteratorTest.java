@@ -1,4 +1,4 @@
-package dev.tockri.kowakunai.args.builder;
+package dev.tockri.kowakunai.args;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

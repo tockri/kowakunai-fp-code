@@ -1,7 +1,7 @@
-package dev.tockri.kowakunai.args.builder;
+package dev.tockri.kowakunai.args;
 
-import dev.tockri.kowakunai.args.Args;
-import dev.tockri.kowakunai.args.ArgsError;
+import static org.assertj.core.api.Assertions.assertThat;
+
 import dev.tockri.kowakunai.util.Failure;
 import dev.tockri.kowakunai.util.Success;
 import org.junit.jupiter.api.BeforeAll;
@@ -9,9 +9,18 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 class ArgsBuilderTest {
+
+  static Schema createTestSchema(String boolKey, String stringKey, String intKey) {
+    return new Schema() {
+      @Override
+      public ArgType get(String key) {
+        return key.equals(boolKey)
+            ? ArgType.BOOL
+            : key.equals(stringKey) ? ArgType.STRING : key.equals(intKey) ? ArgType.INT : null;
+      }
+    };
+  }
 
   @Nested
   @DisplayName("build")
@@ -19,9 +28,9 @@ class ArgsBuilderTest {
     @Test
     @DisplayName("スキーマに従って各種の引数を生成できる")
     void buildsArgs() {
+      var schema = createTestSchema("verbose", "name", "count");
       var result =
-        ArgsBuilder.build(
-          "verbose,name*,count#", new String[]{"-verbose", "-name", "Alice", "-count", "42"});
+          ArgsBuilder.build(schema, new String[] {"-verbose", "-name", "Alice", "-count", "42"});
 
       assertThat(result).isInstanceOf(Success.class);
       if (result instanceof Success<Args, ArgsError>(Args args)) {
@@ -34,7 +43,8 @@ class ArgsBuilderTest {
     @Test
     @DisplayName("引数がない場合は空のArgsを生成する")
     void buildsEmptyArgs() {
-      var result = ArgsBuilder.build("verbose,name*,count#", new String[]{});
+      var schema = createTestSchema("verbose", "name", "count");
+      var result = ArgsBuilder.build(schema, new String[] {});
 
       assertThat(result).isInstanceOf(Success.class);
       if (result instanceof Success<Args, ArgsError>(Args args)) {
@@ -47,7 +57,8 @@ class ArgsBuilderTest {
     @Test
     @DisplayName("整数引数が不正な場合はエラーを返す")
     void returnsFailureForInvalidIntegerArgument() {
-      var result = ArgsBuilder.build("count#", new String[]{"-count", "abc"});
+      var schema = createTestSchema(null, null, "count");
+      var result = ArgsBuilder.build(schema, new String[] {"-count", "abc"});
 
       assertThat(result).isInstanceOf(Failure.class);
       if (result instanceof Failure<Args, ArgsError>(ArgsError error)) {
@@ -58,7 +69,8 @@ class ArgsBuilderTest {
     @Test
     @DisplayName("オプション記号のない引数がある場合はエラーを返す")
     void returnsFailureForUnexpectedArgument() {
-      var result = ArgsBuilder.build("verbose", new String[]{"unexpected"});
+      var schema = createTestSchema("verbose", null, null);
+      var result = ArgsBuilder.build(schema, new String[] {"unexpected"});
 
       assertThat(result).isInstanceOf(Failure.class);
       if (result instanceof Failure<Args, ArgsError>(ArgsError error)) {
@@ -69,7 +81,8 @@ class ArgsBuilderTest {
     @Test
     @DisplayName("スキーマにないキーがある場合はエラーを返す")
     void returnsFailureForUnexpectedKey() {
-      var result = ArgsBuilder.build("verbose", new String[]{"-quiet"});
+      var schema = createTestSchema("verbose", null, null);
+      var result = ArgsBuilder.build(schema, new String[] {"-quiet"});
 
       assertThat(result).isInstanceOf(Failure.class);
       if (result instanceof Failure<Args, ArgsError>(ArgsError error)) {

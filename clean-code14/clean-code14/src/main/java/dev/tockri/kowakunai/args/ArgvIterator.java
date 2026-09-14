@@ -1,4 +1,4 @@
-package dev.tockri.kowakunai.args.builder;
+package dev.tockri.kowakunai.args;
 
 class ArgvIterator {
   private final String[] argv;

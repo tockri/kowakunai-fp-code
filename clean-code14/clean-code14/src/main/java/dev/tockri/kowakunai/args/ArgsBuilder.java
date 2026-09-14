@@ -1,7 +1,5 @@
-package dev.tockri.kowakunai.args.builder;
+package dev.tockri.kowakunai.args;
 
-import dev.tockri.kowakunai.args.Args;
-import dev.tockri.kowakunai.args.ArgsError;
 import dev.tockri.kowakunai.util.Failure;
 import dev.tockri.kowakunai.util.Result;
 import dev.tockri.kowakunai.util.Success;
@@ -10,11 +8,7 @@ import java.util.Optional;
 
 public class ArgsBuilder {
 
-  public static Result<Args, ArgsError> build(String schemaExpr, String[] argv) {
-    return Schema.build(schemaExpr).flatMap(schema -> buildImpl(schema, argv));
-  }
-
-  static Result<Args, ArgsError> buildImpl(Schema schema, String[] argv) {
+  static Result<Args, ArgsError> build(Schema schema, String[] argv) {
     var args = new ArgsImpl();
     var itr = new ArgvIterator(argv);
     while (itr.hasNext()) {
