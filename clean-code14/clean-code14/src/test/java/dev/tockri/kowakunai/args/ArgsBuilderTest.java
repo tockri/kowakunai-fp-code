@@ -12,14 +12,10 @@ import org.junit.jupiter.api.Test;
 class ArgsBuilderTest {
 
   static Schema createTestSchema(String boolKey, String stringKey, String intKey) {
-    return new Schema() {
-      @Override
-      public ArgType get(String key) {
-        return key.equals(boolKey)
+    return key ->
+        key.equals(boolKey)
             ? ArgType.BOOL
             : key.equals(stringKey) ? ArgType.STRING : key.equals(intKey) ? ArgType.INT : null;
-      }
-    };
   }
 
   @Nested
