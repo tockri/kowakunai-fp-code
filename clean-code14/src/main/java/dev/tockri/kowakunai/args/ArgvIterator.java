@@ -14,6 +14,6 @@ class ArgvIterator {
   }
 
   String next() {
-    return argv[index++];
+    return hasNext() ? argv[index++] : null;
   }
 }
