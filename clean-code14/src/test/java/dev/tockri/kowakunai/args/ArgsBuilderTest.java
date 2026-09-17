@@ -13,8 +13,10 @@ class ArgsBuilderTest {
   static Schema createTestSchema(String boolKey, String stringKey, String intKey) {
     return key ->
         key.equals(boolKey)
-            ? ArgType.BOOL
-            : key.equals(stringKey) ? ArgType.STRING : key.equals(intKey) ? ArgType.INT : null;
+            ? new ArgKey(key, ArgType.BOOL)
+            : key.equals(stringKey)
+                ? new ArgKey(key, ArgType.STRING)
+                : key.equals(intKey) ? new ArgKey(key, ArgType.INT) : null;
   }
 
   @Nested

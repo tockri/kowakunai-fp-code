@@ -56,18 +56,6 @@ class SchemaBuilderTest {
   }
 
   @Nested
-  class ToArgTypeTest {
-    @Test
-    @DisplayName("仕様通り変換する")
-    void successful() {
-      // Assert
-      assertThat(SchemaBuilder.toArgType("#")).isEqualTo(ArgType.INT);
-      assertThat(SchemaBuilder.toArgType("*")).isEqualTo(ArgType.STRING);
-      assertThat(SchemaBuilder.toArgType("")).isEqualTo(ArgType.BOOL);
-    }
-  }
-
-  @Nested
   class GetTest {
     @Test
     @DisplayName("定義文字列通りに返す")
@@ -78,9 +66,9 @@ class SchemaBuilderTest {
       // Act & Assert
       assertThat(result.isSuccess()).isTrue();
       if (result instanceof Success<Schema, ArgsError>(Schema schema)) {
-        assertThat(schema.get("e")).isEqualTo(ArgType.BOOL);
-        assertThat(schema.get("b")).isEqualTo(ArgType.STRING);
-        assertThat(schema.get("num")).isEqualTo(ArgType.INT);
+        assertThat(schema.get("e")).isEqualTo(new ArgKey("e", ArgType.BOOL));
+        assertThat(schema.get("b")).isEqualTo(new ArgKey("b", ArgType.STRING));
+        assertThat(schema.get("num")).isEqualTo(new ArgKey("num", ArgType.INT));
         assertThat(schema.get("a")).isEqualTo(null);
       }
     }

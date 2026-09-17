@@ -1,53 +1,42 @@
 package dev.tockri.kowakunai.args;
 
-import dev.tockri.kowakunai.util.Failure;
-import dev.tockri.kowakunai.util.Result;
-import dev.tockri.kowakunai.util.Success;
-import java.util.HashMap;
+import dev.tockri.kowakunai.util.*;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.regex.Pattern;
 
 class SchemaBuilder {
   private static final Pattern elemPattern = Pattern.compile("^([^ \t*#]+)([*#]?)$");
-  private static final String SUFFIX_INT = "#";
-  private static final String SUFFIX_STRING = "*";
 
   /**
    * @param schemaExpr 「,」区切りの要素の連続。要素=key + suffix。 key は #,*,空白以外の文字の連続。suffixは#,*,空文字のいずれか。
    */
   static Result<Schema, ArgsError> build(String schemaExpr) {
-    var elems = schemaExpr.split(",");
-    var argTypes = new HashMap<String, ArgType>();
-    for (String elem : elems) {
-      var matcher = elemPattern.matcher(elem);
-      if (matcher.matches()) {
-        var argType = toArgType(matcher.group(2));
-        argTypes.put(matcher.group(1), argType);
-      } else {
-        return new Failure<>(new ArgsError("Invalid schema expression: " + elem));
-      }
-    }
-    return new Success<>(new SchemaImpl(argTypes));
+    return Arrays.stream(schemaExpr.split(","))
+        .map(SchemaBuilder::parseElem)
+        .collect(ResultCollector.toMap(ArgKey::key, (ak) -> ak))
+        .map(SchemaImpl::new);
   }
 
-  static ArgType toArgType(String suffix) {
-    return switch (suffix) {
-      case SUFFIX_INT -> ArgType.INT;
-      case SUFFIX_STRING -> ArgType.STRING;
-      default -> ArgType.BOOL;
-    };
+  static Result<ArgKey, ArgsError> parseElem(String schemaElem) {
+    var matcher = elemPattern.matcher(schemaElem);
+    if (matcher.matches()) {
+      return new Success<>(new ArgKey(matcher.group(1), ArgType.fromSuffix(matcher.group(2))));
+    } else {
+      return new Failure<>(new ArgsError("Invalid schema expression: " + schemaElem));
+    }
   }
 
   static class SchemaImpl implements Schema {
-    private final Map<String, ArgType> argTypes;
+    private final Map<String, ArgKey> argKeys;
 
-    SchemaImpl(Map<String, ArgType> argTypes) {
-      this.argTypes = argTypes;
+    SchemaImpl(Map<String, ArgKey> argKeys) {
+      this.argKeys = argKeys;
     }
 
     @Override
-    public ArgType get(String key) {
-      return argTypes.get(key);
+    public ArgKey get(String key) {
+      return argKeys.get(key);
     }
   }
 }

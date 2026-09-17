@@ -12,87 +12,57 @@ class ArgsImplTest {
 
   private static ArgsImpl createArgsImpl() {
     var args = new ArgsImpl();
-    args.setTrue("verbose");
-    args.setInt("count", "3");
-    args.setString("name", "Alice");
+    args.set("verbose", true);
+    args.set("count", 3);
+    args.set("name", "Alice");
     return args;
   }
 
   @Nested
   @DisplayName("setTrue")
-  class SetTrueTest {
+  class SetTest {
     @Test
     @DisplayName("真の値を設定できる")
     void setsTrueValue() {
       var args = new ArgsImpl();
 
-      var result = args.setTrue("verbose");
+      var result = args.set("verbose", true);
 
       assertThat(result).isEqualTo(new Success<Void, ArgsError>(null));
       assertThat(args.getBool("verbose")).isTrue();
     }
-  }
 
-  @Nested
-  @DisplayName("setInt")
-  class SetIntTest {
     @Test
     @DisplayName("整数値を設定できる")
     void setsIntegerValue() {
       var args = new ArgsImpl();
 
-      var result = args.setInt("count", "3");
+      var result = args.set("count", 3);
 
       assertThat(result).isEqualTo(new Success<Void, ArgsError>(null));
       assertThat(args.getInt("count")).contains(3);
     }
 
     @Test
-    @DisplayName("整数でない値の場合はエラーを返す")
-    void returnsFailureForInvalidIntegerValue() {
-      var args = new ArgsImpl();
-
-      var result = args.setInt("count", "three");
-
-      assertThat(result).isInstanceOf(Failure.class);
-      assertThat(args.getInt("count")).isEmpty();
-    }
-
-    @Test
     @DisplayName("値がない場合はエラーを返す")
     void returnsFailureForMissingValue() {
       var args = new ArgsImpl();
 
-      var result = args.setInt("count", null);
+      var result = args.set("count", null);
 
       assertThat(result).isInstanceOf(Failure.class);
       assertThat(args.getInt("count")).isEmpty();
     }
-  }
 
-  @Nested
-  @DisplayName("setString")
-  class SetStringTest {
     @Test
     @DisplayName("文字列値を設定できる")
     void setsStringValue() {
       var args = new ArgsImpl();
 
-      var result = args.setString("name", "Alice");
+      var result = args.set("name", "Alice");
 
       assertThat(result).isEqualTo(new Success<Void, ArgsError>(null));
       assertThat(args.getString("name")).contains("Alice");
-    }
-
-    @Test
-    @DisplayName("値がない場合はエラーを返す")
-    void returnsFailureForMissingValue() {
-      var args = new ArgsImpl();
-
-      var result = args.setString("name", null);
-
-      assertThat(result).isInstanceOf(Failure.class);
-      assertThat(args.getString("name")).isEmpty();
     }
   }
 
