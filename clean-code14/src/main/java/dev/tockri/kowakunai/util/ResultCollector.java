@@ -13,14 +13,12 @@ public interface ResultCollector {
         (a, t) -> {
           if (a.success) {
             switch (t) {
-              case Success<T, E>(var tv) -> {
-                a.put(keyMapper.apply(tv), valueMapper.apply(tv));
-              }
+              case Success<T, E>(var tv) -> a.put(keyMapper.apply(tv), valueMapper.apply(tv));
               case Failure<T, E> f -> a.fail(f.error());
             }
           }
         },
-        (ar1, ar2) -> ar1,
+        MutableMapResult::putAll,
         MutableMapResult::toResult,
         Collector.Characteristics.UNORDERED);
   }
@@ -37,6 +35,13 @@ public interface ResultCollector {
 
     void put(K k, V v) {
       map.put(k, v);
+    }
+
+    MutableMapResult<K, V, E> putAll(MutableMapResult<K, V, E> other) {
+      success = success && other.success;
+      error = other.error;
+      map.putAll(other.map);
+      return this;
     }
 
     Result<Map<K, V>, E> toResult() {

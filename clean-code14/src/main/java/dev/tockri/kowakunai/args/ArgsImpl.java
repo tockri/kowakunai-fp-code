@@ -1,16 +1,13 @@
 package dev.tockri.kowakunai.args;
 
-import java.util.HashMap;
-import java.util.Objects;
+import java.util.Map;
 import java.util.Optional;
 
 class ArgsImpl implements Args {
-  private final HashMap<String, Object> valueMap = new HashMap<>();
+  private final Map<String, Object> valueMap;
 
-  void set(String key, Object value) {
-    Objects.requireNonNull(key, "key must not be null");
-    Objects.requireNonNull(value, "value must not be null");
-    valueMap.put(key, value);
+  ArgsImpl(Map<String, Object> valueMap) {
+    this.valueMap = valueMap;
   }
 
   public boolean getBool(String key) {

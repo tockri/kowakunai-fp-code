@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import dev.tockri.kowakunai.util.Failure;
 import dev.tockri.kowakunai.util.Success;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -93,6 +94,94 @@ class ArgsBuilderTest {
       assertThat(result).isInstanceOf(Failure.class);
       if (result instanceof Failure<Args, ArgsError>(ArgsError error)) {
         assertThat(error.message()).isEqualTo("Unexpected key: quiet");
+      }
+    }
+
+    @Nested
+    @DisplayName("makePairs")
+    class MakePairsTest {
+      @Test
+      @DisplayName("スキーマに従ってキーと値の組を生成できる")
+      void makesPairs() {
+        var schema = createTestSchema("verbose", "name", "count");
+
+        var result =
+            ArgsBuilder.makePairs(
+                schema, new String[] {"-verbose", "-name", "Alice", "-count", "42"});
+
+        assertThat(result)
+            .isEqualTo(
+                new Success<>(
+                    List.of(
+                        new ArgsBuilder.ArgPair(new ArgKey("verbose", ArgType.BOOL), null),
+                        new ArgsBuilder.ArgPair(new ArgKey("name", ArgType.STRING), "Alice"),
+                        new ArgsBuilder.ArgPair(new ArgKey("count", ArgType.INT), "42"))));
+      }
+
+      @Test
+      @DisplayName("値を必要とする引数の値がない場合はエラーを返す")
+      void returnsFailureForMissingValue() {
+        var schema = createTestSchema(null, null, "count");
+
+        var result = ArgsBuilder.makePairs(schema, new String[] {"-count"});
+
+        assertThat(result)
+            .isEqualTo(new Failure<>(new ArgsError("Missing argument value for key: count")));
+      }
+    }
+
+    @Nested
+    @DisplayName("parsePair")
+    class ParsePairTest {
+      @Test
+      @DisplayName("値を対応する型に変換してキーと値を返す")
+      void parsesValue() {
+        var pair = new ArgsBuilder.ArgPair(new ArgKey("count", ArgType.INT), "42");
+
+        var result = ArgsBuilder.parsePair(pair);
+
+        assertThat(result)
+            .isEqualTo(new Success<>(new ArgsBuilder.KeyValue("count", 42)));
+      }
+
+      @Test
+      @DisplayName("値を変換できない場合はエラーを返す")
+      void returnsFailureForInvalidValue() {
+        var pair = new ArgsBuilder.ArgPair(new ArgKey("count", ArgType.INT), "abc");
+
+        var result = ArgsBuilder.parsePair(pair);
+
+        assertThat(result).isEqualTo(new Failure<>(new ArgsError("Invalid integer: abc")));
+      }
+    }
+
+    @Nested
+    @DisplayName("parseArg")
+    class ParseArgTest {
+      @Test
+      @DisplayName("オプション記号を除いたキーのスキーマ定義を返す")
+      void returnsArgKey() {
+        var schema = createTestSchema("verbose", null, null);
+
+        var result = ArgsBuilder.parseArg(schema, "-verbose");
+
+        assertThat(result).isEqualTo(new Success<>(new ArgKey("verbose", ArgType.BOOL)));
+      }
+
+      @Test
+      @DisplayName("オプション記号がない場合はエラーを返す")
+      void returnsFailureForMissingOptionPrefix() {
+        var result = ArgsBuilder.parseArg(createTestSchema("verbose", null, null), "verbose");
+
+        assertThat(result).isEqualTo(new Failure<>(new ArgsError("Invalid argument: verbose")));
+      }
+
+      @Test
+      @DisplayName("スキーマにないキーの場合はエラーを返す")
+      void returnsFailureForUnknownKey() {
+        var result = ArgsBuilder.parseArg(createTestSchema("verbose", null, null), "-quiet");
+
+        assertThat(result).isEqualTo(new Failure<>(new ArgsError("Unexpected key: quiet")));
       }
     }
   }
