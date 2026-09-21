@@ -9,36 +9,37 @@ import java.util.*;
 public class ArgsBuilder {
 
   static Result<Args, ArgsError> build(Schema schema, String[] argv) {
-    return makePairs(schema, argv)
+    return makePreEntries(schema, argv)
         .flatMap(
-            (argPairs) ->
-                argPairs.stream()
-                    .map(ArgsBuilder::parsePair)
-                    .collect(ResultCollector.toMap(KeyValue::key, KeyValue::value))
-                    .map(ArgsImpl::new));
+            (entries) ->
+                entries.stream().map(PreEntry::parseValue).collect(ResultCollector.toList()))
+        .map(ArgsImpl::new);
   }
 
-  record ArgPair(ArgKey argKey, String value) {}
+  record PreEntry<T>(String key, ArgType<T> argType, String value) {
+    Result<ArgsEntry<T>, ArgsError> parseValue() {
+      return argType.parse(value).map((v) -> new ArgsEntry<>(key, argType, v));
+    }
+  }
 
-  static Result<List<ArgPair>, ArgsError> makePairs(Schema schema, String[] argv) {
-    var list = new ArrayList<ArgPair>();
+  static Result<List<PreEntry<?>>, ArgsError> makePreEntries(Schema schema, String[] argv) {
+    var list = new ArrayList<PreEntry<?>>();
     for (var i = 0; i < argv.length; i++) {
-      switch (parseArg(schema, argv[i])) {
-        case Success<ArgKey, ArgsError>(var argKey) -> {
+      switch (parseKey(schema, argv[i])) {
+        case Success<SchemaEntry, ArgsError>(SchemaEntry(var key, var argType)) -> {
           String argValue;
-          if (argKey.argType().needsValue()) {
+          if (argType.needsValue()) {
             if (i < argv.length - 1) {
               argValue = argv[++i];
             } else {
-              return new Failure<>(
-                  new ArgsError("Missing argument value for key: " + argKey.key()));
+              return new Failure<>(new ArgsError("Missing argument value for key: " + key));
             }
           } else {
             argValue = null;
           }
-          list.add(new ArgPair(argKey, argValue));
+          list.add(new PreEntry<>(key, argType, argValue));
         }
-        case Failure<ArgKey, ArgsError> f -> {
+        case Failure<SchemaEntry, ArgsError> f -> {
           return f.cast();
         }
       }
@@ -46,15 +47,7 @@ public class ArgsBuilder {
     return new Success<>(list);
   }
 
-  record KeyValue(String key, Object value) {}
-
-  static Result<KeyValue, ArgsError> parsePair(ArgPair pair) {
-    var argKey = pair.argKey();
-    var argType = argKey.argType();
-    return argType.parse(pair.value()).map((v) -> new KeyValue(argKey.key(), v));
-  }
-
-  static Result<ArgKey, ArgsError> parseArg(Schema schema, String arg) {
+  static Result<SchemaEntry, ArgsError> parseKey(Schema schema, String arg) {
     if (!arg.startsWith("-")) {
       return new Failure<>(new ArgsError("Invalid argument: " + arg));
     }

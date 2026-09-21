@@ -14,10 +14,10 @@ class ArgsBuilderTest {
   static Schema createTestSchema(String boolKey, String stringKey, String intKey) {
     return key ->
         key.equals(boolKey)
-            ? new ArgKey(key, ArgType.BOOL)
+            ? new SchemaEntry(key, ArgType.BOOL)
             : key.equals(stringKey)
-                ? new ArgKey(key, ArgType.STRING)
-                : key.equals(intKey) ? new ArgKey(key, ArgType.INT) : null;
+                ? new SchemaEntry(key, ArgType.STRING)
+                : key.equals(intKey) ? new SchemaEntry(key, ArgType.INT) : null;
   }
 
   @Nested
@@ -106,16 +106,16 @@ class ArgsBuilderTest {
         var schema = createTestSchema("verbose", "name", "count");
 
         var result =
-            ArgsBuilder.makePairs(
+            ArgsBuilder.makePreEntries(
                 schema, new String[] {"-verbose", "-name", "Alice", "-count", "42"});
 
         assertThat(result)
             .isEqualTo(
                 new Success<>(
                     List.of(
-                        new ArgsBuilder.ArgPair(new ArgKey("verbose", ArgType.BOOL), null),
-                        new ArgsBuilder.ArgPair(new ArgKey("name", ArgType.STRING), "Alice"),
-                        new ArgsBuilder.ArgPair(new ArgKey("count", ArgType.INT), "42"))));
+                        new ArgsBuilder.PreEntry<>("verbose", ArgType.BOOL, null),
+                        new ArgsBuilder.PreEntry<>("name", ArgType.STRING, "Alice"),
+                        new ArgsBuilder.PreEntry<>("count", ArgType.INT, "42"))));
       }
 
       @Test
@@ -123,7 +123,7 @@ class ArgsBuilderTest {
       void returnsFailureForMissingValue() {
         var schema = createTestSchema(null, null, "count");
 
-        var result = ArgsBuilder.makePairs(schema, new String[] {"-count"});
+        var result = ArgsBuilder.makePreEntries(schema, new String[] {"-count"});
 
         assertThat(result)
             .isEqualTo(new Failure<>(new ArgsError("Missing argument value for key: count")));
@@ -131,25 +131,24 @@ class ArgsBuilderTest {
     }
 
     @Nested
-    @DisplayName("parsePair")
-    class ParsePairTest {
+    @DisplayName("ArgPair")
+    class PreEntryTest {
       @Test
       @DisplayName("値を対応する型に変換してキーと値を返す")
       void parsesValue() {
-        var pair = new ArgsBuilder.ArgPair(new ArgKey("count", ArgType.INT), "42");
+        var pair = new ArgsBuilder.PreEntry<>("count", ArgType.INT, "42");
 
-        var result = ArgsBuilder.parsePair(pair);
+        var result = pair.parseValue();
 
-        assertThat(result)
-            .isEqualTo(new Success<>(new ArgsBuilder.KeyValue("count", 42)));
+        assertThat(result).isEqualTo(new Success<>(new ArgsEntry<>("count", ArgType.INT, 42)));
       }
 
       @Test
       @DisplayName("値を変換できない場合はエラーを返す")
       void returnsFailureForInvalidValue() {
-        var pair = new ArgsBuilder.ArgPair(new ArgKey("count", ArgType.INT), "abc");
+        var pair = new ArgsBuilder.PreEntry<>("count", ArgType.INT, "abc");
 
-        var result = ArgsBuilder.parsePair(pair);
+        var result = pair.parseValue();
 
         assertThat(result).isEqualTo(new Failure<>(new ArgsError("Invalid integer: abc")));
       }
@@ -163,15 +162,15 @@ class ArgsBuilderTest {
       void returnsArgKey() {
         var schema = createTestSchema("verbose", null, null);
 
-        var result = ArgsBuilder.parseArg(schema, "-verbose");
+        var result = ArgsBuilder.parseKey(schema, "-verbose");
 
-        assertThat(result).isEqualTo(new Success<>(new ArgKey("verbose", ArgType.BOOL)));
+        assertThat(result).isEqualTo(new Success<>(new SchemaEntry("verbose", ArgType.BOOL)));
       }
 
       @Test
       @DisplayName("オプション記号がない場合はエラーを返す")
       void returnsFailureForMissingOptionPrefix() {
-        var result = ArgsBuilder.parseArg(createTestSchema("verbose", null, null), "verbose");
+        var result = ArgsBuilder.parseKey(createTestSchema("verbose", null, null), "verbose");
 
         assertThat(result).isEqualTo(new Failure<>(new ArgsError("Invalid argument: verbose")));
       }
@@ -179,7 +178,7 @@ class ArgsBuilderTest {
       @Test
       @DisplayName("スキーマにないキーの場合はエラーを返す")
       void returnsFailureForUnknownKey() {
-        var result = ArgsBuilder.parseArg(createTestSchema("verbose", null, null), "-quiet");
+        var result = ArgsBuilder.parseKey(createTestSchema("verbose", null, null), "-quiet");
 
         assertThat(result).isEqualTo(new Failure<>(new ArgsError("Unexpected key: quiet")));
       }

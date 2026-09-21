@@ -14,29 +14,29 @@ class SchemaBuilder {
   static Result<Schema, ArgsError> build(String schemaExpr) {
     return Arrays.stream(schemaExpr.split(","))
         .map(SchemaBuilder::parseElem)
-        .collect(ResultCollector.toMap(ArgKey::key, (ak) -> ak))
+        .collect(ResultCollector.toMap(SchemaEntry::key, (ak) -> ak))
         .map(SchemaImpl::new);
   }
 
-  static Result<ArgKey, ArgsError> parseElem(String schemaElem) {
+  static Result<SchemaEntry, ArgsError> parseElem(String schemaElem) {
     var matcher = elemPattern.matcher(schemaElem);
     if (matcher.matches()) {
-      return new Success<>(new ArgKey(matcher.group(1), ArgType.fromSuffix(matcher.group(2))));
+      return new Success<>(new SchemaEntry(matcher.group(1), ArgType.fromSuffix(matcher.group(2))));
     } else {
       return new Failure<>(new ArgsError("Invalid schema expression: " + schemaElem));
     }
   }
 
   static class SchemaImpl implements Schema {
-    private final Map<String, ArgKey> argKeys;
+    private final Map<String, SchemaEntry> schemaEntries;
 
-    SchemaImpl(Map<String, ArgKey> argKeys) {
-      this.argKeys = argKeys;
+    SchemaImpl(Map<String, SchemaEntry> schemaEntries) {
+      this.schemaEntries = schemaEntries;
     }
 
     @Override
-    public ArgKey get(String key) {
-      return argKeys.get(key);
+    public SchemaEntry get(String key) {
+      return schemaEntries.get(key);
     }
   }
 }

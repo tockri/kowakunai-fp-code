@@ -1,5 +1,7 @@
 package dev.tockri.kowakunai.args;
 
 interface Schema {
-  ArgKey get(String key);
+  SchemaEntry get(String key);
 }
+
+record SchemaEntry(String key, ArgType<?> argType) {}

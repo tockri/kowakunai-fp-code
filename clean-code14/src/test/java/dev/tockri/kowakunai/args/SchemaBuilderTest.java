@@ -66,9 +66,9 @@ class SchemaBuilderTest {
       // Act & Assert
       assertThat(result.isSuccess()).isTrue();
       if (result instanceof Success<Schema, ArgsError>(Schema schema)) {
-        assertThat(schema.get("e")).isEqualTo(new ArgKey("e", ArgType.BOOL));
-        assertThat(schema.get("b")).isEqualTo(new ArgKey("b", ArgType.STRING));
-        assertThat(schema.get("num")).isEqualTo(new ArgKey("num", ArgType.INT));
+        assertThat(schema.get("e")).isEqualTo(new SchemaEntry("e", ArgType.BOOL));
+        assertThat(schema.get("b")).isEqualTo(new SchemaEntry("b", ArgType.STRING));
+        assertThat(schema.get("num")).isEqualTo(new SchemaEntry("num", ArgType.INT));
         assertThat(schema.get("a")).isEqualTo(null);
       }
     }

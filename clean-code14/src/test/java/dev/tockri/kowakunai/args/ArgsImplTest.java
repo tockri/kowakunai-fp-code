@@ -2,7 +2,7 @@ package dev.tockri.kowakunai.args;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.HashMap;
+import java.util.ArrayList;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -11,11 +11,11 @@ class ArgsImplTest {
 
   private static ArgsImpl createArgsImpl() {
     return new ArgsImpl(
-        new HashMap<>() {
+        new ArrayList<>() {
           {
-            put("verbose", true);
-            put("count", 3);
-            put("name", "Alice");
+            add(new ArgsEntry<>("verbose", ArgType.BOOL, true));
+            add(new ArgsEntry<>("count", ArgType.INT, 3));
+            add(new ArgsEntry<>("name", ArgType.STRING, "Alice"));
           }
         });
   }
