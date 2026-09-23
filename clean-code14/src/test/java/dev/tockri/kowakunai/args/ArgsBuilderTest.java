@@ -70,7 +70,7 @@ class ArgsBuilderTest {
       var schema = createTestSchema(null, null, "count");
       var result = ArgsBuilder.build(schema, new String[] {"-count"});
 
-      assertThat(result.isSuccess()).isFalse();
+      assertThat(result).isInstanceOf(Failure.class);
     }
 
     @Test

@@ -1,6 +1,7 @@
 package dev.tockri.kowakunai.args;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import dev.tockri.kowakunai.util.Failure;
 import dev.tockri.kowakunai.util.Success;
@@ -19,7 +20,7 @@ class SchemaBuilderTest {
       var actual = SchemaBuilder.build("e,b*,num#");
 
       // Assert
-      assertThat(actual.isSuccess()).isTrue();
+      assertThat(actual).isInstanceOf(Success.class);
     }
 
     @Test
@@ -29,7 +30,7 @@ class SchemaBuilderTest {
       var actual = SchemaBuilder.build("e,b*,num#,s b");
 
       // Assert
-      assertThat(actual.isSuccess()).isFalse();
+      assertThat(actual).isInstanceOf(Failure.class);
     }
 
     @Test
@@ -64,12 +65,13 @@ class SchemaBuilderTest {
       var result = SchemaBuilder.build("e,b*,num#");
 
       // Act & Assert
-      assertThat(result.isSuccess()).isTrue();
       if (result instanceof Success<Schema, ArgsError>(Schema schema)) {
         assertThat(schema.get("e")).isEqualTo(new SchemaEntry("e", ArgType.BOOL));
         assertThat(schema.get("b")).isEqualTo(new SchemaEntry("b", ArgType.STRING));
         assertThat(schema.get("num")).isEqualTo(new SchemaEntry("num", ArgType.INT));
         assertThat(schema.get("a")).isEqualTo(null);
+      } else {
+        fail("Successになるはず");
       }
     }
   }

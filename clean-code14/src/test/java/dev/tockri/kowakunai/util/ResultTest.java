@@ -8,37 +8,6 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 class ResultTest {
-  @Nested
-  @DisplayName("then")
-  class ThenTest {
-    @Test
-    @DisplayName("Successの場合は次の処理が実行される")
-    void testThenSuccess() {
-      // Act
-      var result = new Success<Integer, String>(1).then(value -> new Success<>(value + 1));
-
-      // Assert
-      if (result instanceof Success<Integer, String>(Integer value)) {
-        assertThat(value).isEqualTo(2);
-      } else {
-        fail();
-      }
-    }
-
-    @Test
-    @DisplayName("Failureの場合は次の処理が実行されない")
-    void testThenFailure() {
-      // Act
-      var result = new Failure<Integer, String>("エラー").then(value -> new Success<>(value + 1));
-
-      // Assert
-      if (result instanceof Failure<Integer, String>(var error)) {
-        assertThat(error).isEqualTo("エラー");
-      } else {
-        fail();
-      }
-    }
-  }
 
   @Nested
   class MapTest {
@@ -90,8 +59,7 @@ class ResultTest {
       @DisplayName("Failureの場合は次の処理が実行されずエラーが維持される")
       void testFlatMapFailure() {
         // Act
-        var result =
-            new Failure<Integer, String>("エラー").flatMap(value -> new Success<>(value + 1));
+        var result = new Failure<Integer, String>("エラー").flatMap(value -> new Success<>(value + 1));
 
         // Assert
         if (result instanceof Failure<Integer, String>(var error)) {
